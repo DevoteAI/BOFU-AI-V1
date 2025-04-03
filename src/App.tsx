@@ -126,7 +126,7 @@ function App() {
       };
 
       // Send data to webhook
-      const response = await fetch('https://hook.eu2.make.com/ewsij24p22tvoebyk7dvgpg57q6lvgri', {
+      const response = await fetch('https://hook.us2.make.com/dmgxx97dencaquxi9vr9khxrr71kotpm', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
