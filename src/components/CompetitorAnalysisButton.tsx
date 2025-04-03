@@ -33,7 +33,7 @@ export function CompetitorAnalysisButton({ product, onAnalysisComplete, onCompet
     try {
       console.log("Sending request to webhook with product:", product);
       
-      const response = await fetch('https://hook.eu2.make.com/7mi4ol7xfurkhubpvtjrx42gpxt28vmj', {
+      const response = await fetch('https://hook.us2.make.com/n4kuyrqovr1ndwj9nsodio7th70wbm6i', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

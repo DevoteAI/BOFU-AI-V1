@@ -94,6 +94,12 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
       broader_competitors: []
     };
     
+    // Check if the selected category already has 3 competitors
+    if (updatedCompetitors[newCompetitor.type].length >= 3) {
+      toast.error(`Maximum limit of 3 ${newCompetitor.type.replace('_', ' ')} reached`);
+      return;
+    }
+
     updatedCompetitors[newCompetitor.type] = [
       ...updatedCompetitors[newCompetitor.type],
       {
@@ -134,13 +140,14 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
     console.log("Updating competitors:", competitors);
     if (competitors) {
       // Ensure the structure is as expected and create a completely new object
+      // Limit each category to 3 competitors
       const processedCompetitors = {
         direct_competitors: Array.isArray(competitors.direct_competitors) 
-          ? [...competitors.direct_competitors] : [],
+          ? [...competitors.direct_competitors].slice(0, 3) : [],
         niche_competitors: Array.isArray(competitors.niche_competitors)
-          ? [...competitors.niche_competitors] : [],
+          ? [...competitors.niche_competitors].slice(0, 3) : [],
         broader_competitors: Array.isArray(competitors.broader_competitors)
-          ? [...competitors.broader_competitors] : []
+          ? [...competitors.broader_competitors].slice(0, 3) : []
       };
       console.log("Processed competitors for update:", processedCompetitors);
       onUpdateCompetitors?.(processedCompetitors);
@@ -159,7 +166,44 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
     }
 
     setIsAnalyzing(true);
-    const loadingToast = toast.loading('Analyzing competitors...');
+    
+    // Show the beautiful notification about report generation
+    toast.custom(
+      (t) => (
+        <div
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+        >
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 pt-0.5">
+                <div className="h-10 w-10 rounded-full bg-secondary-100 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-secondary-600" />
+                </div>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  Competitor Analysis Report
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your report is being generated. You'll receive a Google Doc link within a few minutes.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-l border-gray-200">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-secondary-600 hover:text-secondary-500 focus:outline-none"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 6000 } // Show for 6 seconds
+    );
 
     try {
       // Prepare the data to send to the webhook
@@ -168,15 +212,24 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
           companyName: product.companyName,
           productName: product.productDetails?.name,
           description: product.productDetails?.description,
+          usps: product.usps,
+          businessOverview: product.businessOverview,
+          painPoints: product.painPoints,
+          features: product.features,
+          targetPersona: product.targetPersona,
+          pricing: product.pricing,
+          currentSolutions: product.currentSolutions,
+          capabilities: product.capabilities
         },
         competitors: product.competitors,
-        requestType: 'analyze_competitors'
+        requestType: 'analyze_competitors',
+        uniqueId: crypto.randomUUID()
       };
 
       console.log('Sending competitor analysis request:', data);
 
       // Send the data to the webhook
-      const response = await fetch('https://hook.eu2.make.com/7aqs4b5vpe38o7q4lofgbkktn9m9wi5n', {
+      const response = await fetch('https://hook.us2.make.com/qjbyl0g1d1ailgmnn2p9pjmcu888xe43', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -227,11 +280,9 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
           onUpdate(textResponse);
         }
       }
-
-      toast.success('Competitor analysis completed!', { id: loadingToast });
     } catch (error) {
       console.error('Error analyzing competitors:', error);
-      toast.error(`Failed to analyze competitors: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: loadingToast });
+      toast.error(`Failed to analyze competitors: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsAnalyzing(false);
     }
