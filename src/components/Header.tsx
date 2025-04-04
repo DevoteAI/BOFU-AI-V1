@@ -2,6 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Target, BarChart, LineChart, Brain } from 'lucide-react';
 
+// Logo SVG component
+const Logo = () => (
+  <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="#FFE600" />
+    <path d="M18.5 5L7 17.5H14L12.5 27L24 14.5H17L18.5 5Z" fill="#0A0A0A" stroke="#0A0A0A" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 export function Header() {
   return (
     <header className="w-full mb-8">
@@ -11,16 +19,36 @@ export function Header() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-neutral-900 leading-tight">
-          Research Simplified.{' '}
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-500">
-            Insights Amplified.
-          </span>
-        </h2>
-        <p className="text-lg text-neutral-600 max-w-2xl">
-          Upload documents and add blog links with one click. Get AI-powered insights to understand 
-          your customers and market opportunities.
-        </p>
+        <motion.div
+          className="inline-block mb-4"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ 
+            type: "spring", 
+            duration: 0.8,
+            delay: 0.2
+          }}
+        >
+          <Logo />
+        </motion.div>
+        
+        <motion.h1
+          className="text-4xl font-bold text-primary-400 mb-3"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          BOFU AI Research Assistant
+        </motion.h1>
+        
+        <motion.p
+          className="mx-auto max-w-2xl text-gray-400 text-lg"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          Upload your research documents, add blog URLs, and specify your product lines to generate comprehensive bottom-of-funnel analysis.
+        </motion.p>
       </motion.div>
 
       <motion.div 

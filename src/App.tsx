@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { AuthModal } from './components/auth/AuthModal';
@@ -15,7 +15,9 @@ import { ProductAnalysis, parseWebhookResponse } from './types/product';
 import { ProcessingModal } from './components/ProcessingModal';
 import { ResearchResult, getResearchResults, deleteResearchResult } from './lib/research';
 
-function App() {
+export default function App() {
+  console.log('App rendering started');
+  
   const [user, setUser] = React.useState<any>(null);
   const [showAuthModal, setShowAuthModal] = React.useState(true);
   const [showHistory, setShowHistory] = React.useState(false);
@@ -30,6 +32,8 @@ function App() {
   const [analysisResults, setAnalysisResults] = useState<ProductAnalysis[]>([]);
   // Add a view state to control which view is displayed
   const [currentView, setCurrentView] = useState<'auth' | 'main' | 'history' | 'results'>('main');
+  
+  console.log('App state initialized', { currentView, user: !!user, showAuthModal });
   
   // Function to force update to history view
   const forceHistoryView = () => {
@@ -52,27 +56,41 @@ function App() {
     }, 100);
   };
 
-  React.useEffect(() => {
+  // Auth effect
+  useEffect(() => {
+    console.log('Auth effect running');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Auth session retrieved', { hasSession: !!session });
       setUser(session?.user ?? null);
       setShowAuthModal(!session?.user);
+    }).catch(error => {
+      console.error('Error getting auth session:', error);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed', { event: _event, hasSession: !!session });
       setUser(session?.user ?? null);
       setShowAuthModal(!session?.user);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Auth effect cleanup');
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Load research history when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log('History effect running', { user: !!user });
+    
     const loadHistory = async () => {
       try {
+        console.log('Loading research history');
         const results = await getResearchResults();
+        console.log('Research history loaded', { count: results.length });
         setResearchHistory(results);
       } catch (error) {
         console.error('Error loading research history:', error);
@@ -84,6 +102,8 @@ function App() {
 
     if (user) {
       loadHistory();
+    } else {
+      console.log('Skipping history load - no user');
     }
   }, [user]);
 
@@ -225,22 +245,29 @@ function App() {
   };
 
   // Update currentView based on state changes
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log('View state effect running', { user: !!user, showHistory, activeStep, hasResults: analysisResults.length > 0 });
+    
+    let newView: 'auth' | 'main' | 'history' | 'results' = 'main';
+    
     if (!user) {
-      setCurrentView('auth');
+      newView = 'auth';
     } else if (showHistory) {
-      setCurrentView('history');
+      newView = 'history';
     } else if (activeStep === 4 && analysisResults.length > 0) {
-      setCurrentView('results');
+      newView = 'results';
     } else {
-      setCurrentView('main');
+      newView = 'main';
     }
+    
+    console.log('Setting new view', { oldView: currentView, newView });
+    setCurrentView(newView);
   }, [user, showHistory, activeStep, analysisResults]);
 
   // Update the ProductResultsPage render
   const renderResultsPage = () => {
     return (
-      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-dark bg-circuit-board">
         <MainHeader 
           showHistory={showHistory} 
           setShowHistory={(value) => {
@@ -277,10 +304,12 @@ function App() {
 
   // Render based on currentView
   const renderView = () => {
+    console.log('Rendering view', { currentView });
+    
     switch (currentView) {
       case 'auth':
         return (
-          <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+          <div className="min-h-screen bg-gradient-dark bg-circuit-board">
             <Toaster position="top-right" />
             <MainHeader />
             <AuthModal 
@@ -292,7 +321,7 @@ function App() {
       
       case 'history':
         return (
-          <div className="min-h-screen bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50">
+          <div className="min-h-screen bg-gradient-dark bg-circuit-board">
             <Toaster position="top-right" />
             <MainHeader 
               showHistory={showHistory} 
@@ -316,7 +345,7 @@ function App() {
               <div className="flex items-center justify-between mb-8">
                 <div className="space-y-1">
                   <motion.h1 
-                    className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600"
+                    className="text-3xl font-bold text-primary-400"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
@@ -324,7 +353,7 @@ function App() {
                     Research History
                   </motion.h1>
                   <motion.p 
-                    className="text-gray-500"
+                    className="text-gray-400"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
@@ -338,8 +367,8 @@ function App() {
                     setShowHistory(false);
                     setCurrentView('main');
                   }}
-                  className="px-4 py-2 bg-white border-2 border-primary-200 text-primary-700 rounded-lg hover:bg-primary-50 
-                    transition-all shadow-sm hover:shadow-lg hover:shadow-primary-100/50 flex items-center gap-2"
+                  className="px-4 py-2 bg-secondary-800 border-2 border-primary-500/20 text-primary-400 rounded-lg hover:bg-secondary-700 
+                    transition-all shadow-glow hover:shadow-glow-strong hover:border-primary-500/40 flex items-center gap-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   initial={{ opacity: 0, x: 20 }}
@@ -361,11 +390,13 @@ function App() {
         );
         
       case 'results':
+        console.log('Rendering results view');
         return renderResultsPage();
         
       default: // 'main'
+        console.log('Rendering main view');
         return (
-          <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50">
+          <div className="min-h-screen bg-gradient-dark bg-circuit-board">
             <Toaster position="top-right" />
             <MainHeader 
               showHistory={showHistory} 
@@ -383,21 +414,21 @@ function App() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative pt-8">
               <Header />
               <div className="mt-8 space-y-12">
-                <div className="bg-white p-8 rounded-xl shadow-soft">
-                  <h2 className="text-2xl font-bold mb-8">Upload Your Research Sources</h2>
+                <div className="bg-secondary-900 border-2 border-primary-500/20 p-8 rounded-xl shadow-glow">
+                  <h2 className="text-2xl font-bold mb-8 text-primary-400">Upload Your Research Sources</h2>
                   
                   <div className="space-y-10">
                     <DocumentUploader onDocumentsProcessed={handleDocumentsProcessed} />
                     
-                    <div className="border-t border-gray-100 pt-8">
+                    <div className="border-t border-secondary-800 pt-8">
                       <BlogLinkInput onBlogLinksChange={handleBlogLinksChange} />
                     </div>
                     
-                    <div className="border-t border-gray-100 pt-8">
+                    <div className="border-t border-secondary-800 pt-8">
                       <ProductLineInput onProductLinesChange={handleProductLinesChange} />
                     </div>
                     
-                    <div className="border-t border-gray-100 pt-8">
+                    <div className="border-t border-secondary-800 pt-8">
                       <SubmitSection 
                         isDisabled={!isFormValid()} 
                         isSubmitting={isSubmitting} 
@@ -413,6 +444,7 @@ function App() {
     }
   };
   
+  console.log('About to return main component');
   return (
     <>
       <Toaster position="top-right" />
@@ -420,5 +452,3 @@ function App() {
     </>
   );
 }
-
-export default App;

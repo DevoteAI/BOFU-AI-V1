@@ -6,6 +6,8 @@ import { ResearchResult } from '../lib/research';
 import toast from 'react-hot-toast';
 import { EmptyHistoryState } from './EmptyHistoryState';
 import { HistorySkeletonLoader } from './SkeletonLoader';
+import { ClipboardIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface ResearchHistoryProps {
   results: ResearchResult[];
@@ -67,152 +69,94 @@ export function ResearchHistory({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-soft p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <History className="text-primary-600" size={20} />
-          <h2 className="text-lg font-semibold">Research History</h2>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <motion.button
-            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            title={sortOrder === 'desc' ? 'Sort Oldest First' : 'Sort Newest First'}
-          >
-            {sortOrder === 'desc' ? <SortDesc size={18} /> : <SortAsc size={18} />}
-          </motion.button>
-        </div>
-      </div>
-      
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search by company or product name..."
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <AnimatePresence>
-        {isLoading ? (
+    <div className="space-y-6">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-3 mt-4"
+            className="w-12 h-12 rounded-full border-4 border-primary-500/20"
+            animate={{
+              rotate: 360,
+              borderTopColor: 'rgb(var(--color-primary-400))',
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+          <p className="mt-4 text-gray-400">Loading research history...</p>
+        </div>
+      ) : results.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="flex justify-center">
+            <div className="p-4 rounded-full bg-secondary-800 border-2 border-primary-500/20 shadow-glow">
+              <ClipboardIcon className="w-8 h-8 text-primary-400" />
+            </div>
+          </div>
+          <h3 className="mt-4 text-lg font-medium text-primary-400">No Research History</h3>
+          <p className="mt-2 text-sm text-gray-400">
+            Start your first research to begin building your history.
+          </p>
+          <button
+            onClick={onStartNew}
+            className="mt-6 px-4 py-2 bg-secondary-800 border-2 border-primary-500/20 text-primary-400 rounded-lg hover:bg-secondary-700 
+              transition-all shadow-glow hover:shadow-glow-strong hover:border-primary-500/40"
           >
-            <HistorySkeletonLoader count={5} />
-          </motion.div>
-        ) : sortedResults.length === 0 && !searchTerm ? (
-          onStartNew ? (
-            <EmptyHistoryState onStartNew={onStartNew} />
-          ) : (
+            Start New Research
+          </button>
+        </div>
+      ) : (
+        <motion.div
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {results.map((result, index) => (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-12 text-gray-500"
+              key={result.id}
+              className="group relative bg-secondary-900 border-2 border-primary-500/20 rounded-xl p-4 shadow-glow hover:shadow-glow-strong 
+                hover:border-primary-500/40 transition-all cursor-pointer"
+              onClick={() => onSelect(result)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              No research results found
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-primary-400">
+                    {result.data[0]?.companyName || 'Unknown Company'}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-400">
+                    {result.data[0]?.productDetails?.name || 'Unknown Product'}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(result.id);
+                  }}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-primary-400 hover:bg-secondary-800 transition-colors"
+                >
+                  <TrashIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
+                <CalendarIcon className="w-4 h-4" />
+                <span>
+                  {new Date(result.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+              </div>
             </motion.div>
-          )
-        ) : sortedResults.length === 0 && searchTerm ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center py-12 text-gray-500"
-          >
-            No results match your search
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-3"
-          >
-            {sortedResults.map((result) => (
-              <motion.div
-                key={result.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                onClick={() => onSelect(result)}
-                className="group flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-md transition-all cursor-pointer"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900 truncate">
-                      {result.data[0]?.companyName || 'Unknown Company'} - {result.data[0]?.productDetails?.name || 'Unnamed Product'}
-                      {result.data.length > 1 && ` (+${result.data.length - 1} more)`}
-                    </h3>
-                    {result.is_draft && (
-                      <span className="px-2 py-1 text-xs font-medium bg-warning-100 text-warning-800 rounded-full whitespace-nowrap">
-                        Draft
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 whitespace-nowrap">
-                    <Clock size={14} />
-                    <span>
-                      Created {formatDate(result.created_at)}
-                      {result.updated_at !== result.created_at && 
-                        ` • Updated ${formatDate(result.updated_at)}`}
-                    </span>
-                    <span className="text-gray-400">•</span>
-                    <span>{result.data.length} {result.data.length === 1 ? 'product' : 'products'}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <motion.button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(result);
-                    }}
-                    className="p-2 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors flex items-center gap-1.5"
-                    title="View/Edit Result"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {result.is_draft ? (
-                      <>
-                        <Edit size={16} />
-                        <span className="text-sm">Edit</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye size={16} />
-                        <span className="text-sm">View</span>
-                      </>
-                    )}
-                  </motion.button>
-                  <motion.button
-                    onClick={(e) => handleDelete(result.id, e)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5"
-                    title="Delete Result"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Trash2 size={16} />
-                    <span className="text-sm">Delete</span>
-                  </motion.button>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ))}
+        </motion.div>
+      )}
     </div>
   );
 }

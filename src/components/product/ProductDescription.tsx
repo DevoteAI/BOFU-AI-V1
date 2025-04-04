@@ -17,22 +17,21 @@ export function ProductDescription({
   toggleExpanded 
 }: ProductDescriptionProps) {
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all relative">
+    <div className="bg-secondary-900/80 backdrop-blur-sm rounded-xl border border-primary-500/20 p-4 hover:shadow-glow transition-all group">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">Product Description</h3>
+        <h3 className="text-lg font-semibold text-primary-400">Product Description</h3>
         <button
           onClick={toggleExpanded}
-          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-secondary-800 rounded-lg transition-colors"
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? "Collapse description" : "Expand description"}
+          aria-label={isExpanded ? "Collapse section" : "Expand section"}
         >
           {isExpanded ? 
-            <ChevronUp className="text-gray-500" /> : 
-            <ChevronDown className="text-gray-500" />
+            <ChevronUp className="text-gray-400" /> : 
+            <ChevronDown className="text-gray-400" />
           }
         </button>
       </div>
-      
       <AnimatePresence>
         {isExpanded ? (
           <motion.div
@@ -42,26 +41,24 @@ export function ProductDescription({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <EditableText
-              value={description}
+            <EditableText 
+              value={description} 
               onUpdate={onUpdate}
-              multiline
+              multiline={true}
             />
           </motion.div>
         ) : (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-1"
+            className="overflow-hidden"
           >
-            <p className="text-sm text-gray-500 line-clamp-2">
-              {description}
-            </p>
+            <p className="text-gray-300 line-clamp-2">{description}</p>
             <button
               onClick={toggleExpanded}
-              className="mt-1 text-xs text-primary-600 hover:text-primary-700 flex items-center"
+              className="mt-1 text-xs text-primary-400 hover:text-primary-300 flex items-center"
             >
-              Read more
+              View full description
             </button>
           </motion.div>
         )}

@@ -26,26 +26,26 @@ export function ProductSection({
   const getIcon = () => {
     switch (sectionType) {
       case 'usps':
-        return <CheckCircle className="text-primary-500 mt-1 mr-2 flex-shrink-0" size={16} />;
+        return <CheckCircle className="text-primary-400 mt-1 mr-2 flex-shrink-0" size={16} />;
       case 'painPoints':
-        return <AlertCircle className="text-warning-500 mt-1 mr-2 flex-shrink-0" size={16} />;
+        return <AlertCircle className="text-primary-400 mt-1 mr-2 flex-shrink-0" size={16} />;
       case 'features':
-        return <CheckCircle className="text-success-500 mt-1 mr-2 flex-shrink-0" size={16} />;
+        return <CheckCircle className="text-primary-400 mt-1 mr-2 flex-shrink-0" size={16} />;
       default:
-        return <CheckCircle className="text-primary-500 mt-1 mr-2 flex-shrink-0" size={16} />;
+        return <CheckCircle className="text-primary-400 mt-1 mr-2 flex-shrink-0" size={16} />;
     }
   };
   
   const getSectionStyle = () => {
     switch (sectionType) {
       case 'usps':
-        return 'hover:bg-primary-50/20 border-primary-100';
+        return 'hover:bg-primary-500/10 border-primary-500/20';
       case 'painPoints':
-        return 'hover:bg-warning-50/20 border-warning-100';
+        return 'hover:bg-primary-500/10 border-primary-500/20';
       case 'features':
-        return 'hover:bg-success-50/20 border-success-100';
+        return 'hover:bg-primary-500/10 border-primary-500/20';
       default:
-        return 'hover:bg-primary-50/20 border-primary-100';
+        return 'hover:bg-primary-500/10 border-primary-500/20';
     }
   };
 
@@ -66,27 +66,27 @@ export function ProductSection({
   };
 
   return (
-    <div className={`bg-white/80 backdrop-blur-sm rounded-xl border ${getSectionStyle()} p-4 hover:shadow-md transition-all group`}>
+    <div className={`bg-secondary-900/80 backdrop-blur-sm rounded-xl border ${getSectionStyle()} p-4 hover:shadow-glow transition-all group`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-primary-400">{title}</h3>
         <div className="flex items-center">
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors mr-1"
+              className="p-1.5 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-colors mr-1"
             >
               <Edit2 size={16} />
             </button>
           )}
           <button
             onClick={toggleExpanded}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-secondary-800 rounded-lg transition-colors"
             aria-expanded={isExpanded}
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
           >
             {isExpanded ? 
-              <ChevronUp className="text-gray-500" /> : 
-              <ChevronDown className="text-gray-500" />
+              <ChevronUp className="text-gray-400" /> : 
+              <ChevronDown className="text-gray-400" />
             }
           </button>
         </div>
@@ -105,7 +105,7 @@ export function ProductSection({
               items.map((item, i) => (
                 <div key={i} className="flex items-start">
                   {getIcon()}
-                  <p className="text-gray-700">{item}</p>
+                  <p className="text-gray-300">{item}</p>
                 </div>
               ))
             ) : (
@@ -126,7 +126,7 @@ export function ProductSection({
                 type="text"
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="flex-1 px-3 py-2 bg-secondary-800 border border-primary-500/30 text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Add new item..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newItem.trim()) {
@@ -136,47 +136,42 @@ export function ProductSection({
               />
               <button
                 onClick={handleAddItem}
-                className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                className="p-2 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-colors"
               >
                 <Plus size={20} />
               </button>
             </div>
+            
             <div className="space-y-2">
               {editedItems.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 group/item">
-                  <input
-                    value={item}
-                    onChange={(e) => {
-                      const newItems = [...editedItems];
-                      newItems[i] = e.target.value;
-                      setEditedItems(newItems);
-                    }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                <div key={i} className="flex items-center justify-between group/item p-2 hover:bg-secondary-800 rounded-lg">
+                  <p className="text-gray-300">{item}</p>
                   <button
                     onClick={() => handleRemoveItem(i)}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all"
+                    className="invisible group-hover/item:visible p-1 text-gray-400 hover:text-red-400 hover:bg-red-900/30 rounded-full transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
             </div>
+            
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => {
                   setEditedItems(items);
                   setIsEditing(false);
                 }}
-                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 text-gray-400 hover:text-gray-300 hover:bg-secondary-800 rounded-lg transition-colors"
               >
-                <X size={16} /> Cancel
+                Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 bg-primary-500 text-secondary-900 rounded-lg hover:bg-primary-400 transition-colors flex items-center gap-1"
               >
-                <Save size={16} /> Save Changes
+                <Save size={16} />
+                Save
               </button>
             </div>
           </motion.div>
@@ -190,7 +185,7 @@ export function ProductSection({
           </span>
           <button
             onClick={toggleExpanded}
-            className="ml-2 text-xs text-primary-600 hover:text-primary-700 flex items-center"
+            className="ml-2 text-xs text-primary-400 hover:text-primary-300 flex items-center"
           >
             Show details
           </button>

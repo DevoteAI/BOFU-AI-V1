@@ -1,13 +1,24 @@
-import React from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, LogIn, History, Home, Book } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { AuthModal } from './auth/AuthModal';
 import { UserMenu } from './auth/UserMenu';
+import { Link } from 'react-router-dom';
+import { Menu, Transition } from '@headlessui/react';
+import { UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+
+// Logo SVG component
+const Logo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="#FFE600" />
+    <path d="M18.5 5L7 17.5H14L12.5 27L24 14.5H17L18.5 5Z" fill="#0A0A0A" stroke="#0A0A0A" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 interface MainHeaderProps {
   showHistory?: boolean;
-  setShowHistory?: (show: boolean) => void;
+  setShowHistory?: (value: boolean) => void;
   onStartNew?: () => void;
   user?: any;
   forceHistoryView?: () => void;
@@ -37,108 +48,85 @@ export function MainHeader({
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleSignOut = () => {
+    // Implement sign out logic
+    console.log("Signing out");
+  };
+
   return (
-    <header className="w-full bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-16 flex items-center justify-between relative">
-          <div className="flex items-center gap-3">
-            <motion.button
-              onClick={onStartNew}
-              className="relative"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Go to home"
-            >
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 shadow-md">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <motion.div 
-                className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500"
-                initial={{ opacity: 0.5, scale: 1 }}
-                animate={{ opacity: 0, scale: 1.5 }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-            </motion.button>
-            <motion.h1 
-              onClick={onStartNew}
-              className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 animate-text cursor-pointer hidden sm:block"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              BOFU AI
-            </motion.h1>
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-secondary-900/80 border-b border-primary-500/20">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="flex items-center gap-2">
+                <Logo />
+                <span className="text-xl font-bold text-primary-400">BOFU AI</span>
+              </Link>
+            </div>
           </div>
-          
-          <div>
-            {user ? (
-              <div className="flex items-center gap-3">
-                {!showHistory && (
-                <motion.button
-                  onClick={() => {
-                    console.log("MainHeader History button clicked");
-                    if (forceHistoryView) {
-                      forceHistoryView();
-                    } else if (setShowHistory) {
-                      setShowHistory(true);
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-primary-200 text-primary-700 rounded-lg hover:bg-primary-50 
-                    transition-all shadow-sm hover:shadow-md hover:shadow-primary-100/50"
-                  whileHover={{ 
-                    scale: 1.02, 
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                    backgroundColor: "var(--tw-color-primary-50)"
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  aria-label="View research history"
-                >
-                  <History size={18} className="text-secondary-600" />
-                  <span className="font-medium">History</span>
-                </motion.button>
-                )}
-                {showHistory && (
-                  <motion.button
-                    onClick={() => setShowHistory?.(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-primary-200 text-primary-700 rounded-lg hover:bg-primary-50 
-                      transition-all shadow-sm hover:shadow-md hover:shadow-primary-100/50"
-                    whileHover={{ 
-                      scale: 1.02, 
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                      backgroundColor: "var(--tw-color-primary-50)"
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    aria-label="Return to home"
-                  >
-                    <Home size={18} className="text-secondary-600" />
-                    <span className="font-medium">Home</span>
-                  </motion.button>
-                )}
-                <UserMenu user={user} />
-              </div>
-            ) : (
-              <motion.button
-                onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg shadow-sm hover:shadow-md transition-all"
-                whileHover={{ scale: 1.02, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
-                whileTap={{ scale: 0.98 }}
-                aria-label="Sign in"
+          <div className="flex items-center gap-4">
+            {showHistory !== undefined && setShowHistory && (
+              <button
+                onClick={() => {
+                  console.log("History button clicked in MainHeader");
+                  setShowHistory(!showHistory);
+                }}
+                className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2
+                  ${showHistory 
+                    ? 'bg-secondary-800 text-primary-400 border-2 border-primary-500/20 shadow-glow hover:shadow-glow-strong hover:border-primary-500/40' 
+                    : 'text-gray-400 hover:text-primary-400 hover:bg-secondary-800'
+                  }`}
               >
-                <LogIn size={18} />
+                <ClockIcon className="h-5 w-5" />
+                History
+              </button>
+            )}
+            {user ? (
+              <Menu as="div" className="relative">
+                <Menu.Button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary-800 text-gray-400 hover:text-primary-400">
+                  <UserCircleIcon className="h-6 w-6" />
+                  <span>{user.email}</span>
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg bg-secondary-800 border-2 border-primary-500/20 shadow-glow">
+                    <div className="py-1">
+                      <Menu.Item>
+                        {({ active }: { active: boolean }) => (
+                          <button
+                            onClick={handleSignOut}
+                            className={`${
+                              active ? 'bg-secondary-700 text-primary-400' : 'text-gray-400'
+                            } group flex w-full items-center px-4 py-2`}
+                          >
+                            Sign Out
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            ) : (
+              <button
+                onClick={onStartNew}
+                className="px-4 py-2 bg-secondary-800 border-2 border-primary-500/20 text-primary-400 rounded-lg hover:bg-secondary-700 
+                  transition-all shadow-glow hover:shadow-glow-strong hover:border-primary-500/40"
+              >
                 Sign In
-              </motion.button>
+              </button>
             )}
           </div>
         </div>
-      </div>
-      
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-      />
+      </nav>
     </header>
   );
 }

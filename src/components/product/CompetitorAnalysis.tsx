@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, FileText, ExternalLink, Plus, X, Edit, Check, ChevronDown, ChevronUp, BarChart } from 'lucide-react';
+import { Target, FileText, ExternalLink, Plus, X, Edit, Check, ChevronDown, ChevronUp, BarChart, Loader2 } from 'lucide-react';
 import { ProductAnalysis, CompetitorItem, CompetitorsData } from '../../types/product/types';
 import { CompetitorAnalysisButton } from '../CompetitorAnalysisButton';
 import toast from 'react-hot-toast';
@@ -355,14 +355,14 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
 
   return (
     <motion.div 
-      className="bg-gradient-to-r from-secondary-50 to-white rounded-xl border border-secondary-100 p-4 hover:shadow-md transition-all"
+      className="bg-secondary-900/80 backdrop-blur-sm rounded-xl border border-primary-500/20 p-4 hover:shadow-glow transition-all"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <Target className="text-secondary-500" size={20} />
+        <h3 className="text-lg font-semibold text-primary-400 flex items-center gap-2">
+          <Target className="text-primary-400" size={20} />
           Competitor Analysis
         </h3>
         <CompetitorAnalysisButton 
@@ -373,86 +373,98 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
       </div>
       
       {/* Competitors Section */}
-      {(product.competitors || true) && (
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-3">
-            <h4 className="text-sm font-medium text-gray-700">Identified Competitors</h4>
+      {(product.competitors || true) &&
+        <div>
+          {/* Manual competitor entry */}
+          {!showForm ? (
             <button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-1 text-xs text-secondary-600 hover:text-secondary-800"
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-1 mb-3 px-3 py-1.5 text-xs rounded-lg bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 transition-colors"
             >
               <Plus size={14} />
-              {showForm ? 'Cancel' : 'Add Competitor Manually'}
+              Add Competitor Manually
             </button>
-          </div>
-          
-          {/* Add Competitor Form */}
-          <AnimatePresence>
-            {showForm && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-white p-3 rounded-lg border border-secondary-100 mb-4 overflow-hidden"
-              >
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
-                    <select
-                      value={newCompetitor.type}
-                      onChange={(e) => setNewCompetitor(prev => ({ ...prev, type: e.target.value as CompetitorType }))}
-                      className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500"
-                    >
-                      <option value="direct_competitors">Direct Competitor</option>
-                      <option value="niche_competitors">Niche Competitor</option>
-                      <option value="broader_competitors">Broader Competitor</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Company Name</label>
-                    <input
-                      type="text"
-                      value={newCompetitor.company_name}
-                      onChange={(e) => setNewCompetitor(prev => ({ ...prev, company_name: e.target.value }))}
-                      placeholder="Company name"
-                      className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Product Name</label>
-                    <input
-                      type="text"
-                      value={newCompetitor.product_name}
-                      onChange={(e) => setNewCompetitor(prev => ({ ...prev, product_name: e.target.value }))}
-                      placeholder="Product name"
-                      className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                    <input
-                      type="text"
-                      value={newCompetitor.category}
-                      onChange={(e) => setNewCompetitor(prev => ({ ...prev, category: e.target.value }))}
-                      placeholder="Category or description"
-                      className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500"
-                    />
-                  </div>
-                  <button
-                    onClick={handleAddCompetitor}
-                    className="bg-secondary-500 text-white py-2 px-4 rounded-lg text-sm hover:bg-secondary-600 flex items-center gap-2 justify-center"
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-4 bg-secondary-800 rounded-lg border border-primary-500/20 p-3"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium text-primary-400">Add New Competitor</h4>
+                <button 
+                  onClick={() => setShowForm(false)}
+                  className="p-1 text-gray-400 hover:text-gray-300 rounded-full hover:bg-secondary-700"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Competitor Type</label>
+                  <select 
+                    value={newCompetitor.type}
+                    onChange={(e) => setNewCompetitor({...newCompetitor, type: e.target.value as CompetitorType})}
+                    className="w-full px-3 py-1.5 text-sm bg-secondary-900 border border-primary-500/30 text-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <Check size={14} />
-                    Add Competitor
-                  </button>
+                    <option value="direct_competitors">Direct Competitor</option>
+                    <option value="niche_competitors">Niche Competitor</option>
+                    <option value="broader_competitors">Broader Competitor</option>
+                  </select>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Competitor Lists */}
-          <div className="bg-white rounded-lg border border-secondary-100 p-3">
+                
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Category/Segment</label>
+                  <input
+                    type="text"
+                    value={newCompetitor.category}
+                    onChange={(e) => setNewCompetitor({...newCompetitor, category: e.target.value})}
+                    placeholder="e.g. Enterprise, SMB, Consumer"
+                    className="w-full px-3 py-1.5 text-sm bg-secondary-900 border border-primary-500/30 text-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Company Name</label>
+                  <input
+                    type="text"
+                    value={newCompetitor.company_name}
+                    onChange={(e) => setNewCompetitor({...newCompetitor, company_name: e.target.value})}
+                    placeholder="e.g. Acme Inc."
+                    className="w-full px-3 py-1.5 text-sm bg-secondary-900 border border-primary-500/30 text-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Product Name</label>
+                  <input
+                    type="text"
+                    value={newCompetitor.product_name}
+                    onChange={(e) => setNewCompetitor({...newCompetitor, product_name: e.target.value})}
+                    placeholder="e.g. Acme Pro"
+                    className="w-full px-3 py-1.5 text-sm bg-secondary-900 border border-primary-500/30 text-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddCompetitor}
+                  disabled={!newCompetitor.company_name || !newCompetitor.product_name}
+                  className="px-3 py-1.5 text-xs bg-primary-500 text-secondary-900 font-medium rounded-lg hover:bg-primary-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="bg-secondary-800 rounded-lg border border-primary-500/20 p-3">
             {renderCompetitorSection('Direct Competitors', 'direct_competitors', 
               Array.isArray(product.competitors?.direct_competitors) ? product.competitors.direct_competitors : [])}
             {renderCompetitorSection('Niche Competitors', 'niche_competitors', 
@@ -462,22 +474,21 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
             
             {/* Analyze Competitors Button */}
             <div className="mt-4">
-              <div className="text-xs text-gray-500 text-center mb-2">
+              <div className="text-xs text-gray-400 text-center mb-2">
                 Click below to perform deep analysis on all identified competitors.
               </div>
               <div className="flex justify-center">
-                <motion.button
+                <button
                   onClick={handleAnalyzeCompetitors}
-                  disabled={isAnalyzing}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-sm
-                    bg-gradient-to-r from-secondary-600 to-secondary-500 text-white hover:shadow-md hover:shadow-secondary-100/50
-                    disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-                  whileHover={!isAnalyzing ? { scale: 1.02 } : {}}
-                  whileTap={!isAnalyzing ? { scale: 0.98 } : {}}
+                  disabled={isAnalyzing || 
+                    (!product.competitors?.direct_competitors?.length && 
+                     !product.competitors?.niche_competitors?.length && 
+                     !product.competitors?.broader_competitors?.length)}
+                  className="w-full sm:w-auto px-4 py-2 bg-primary-500 text-secondary-900 font-medium rounded-lg hover:bg-primary-400 transition-colors shadow-glow hover:shadow-glow-strong flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500 disabled:hover:shadow-none"
                 >
                   {isAnalyzing ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Analyzing...
                     </>
                   ) : (
@@ -486,29 +497,28 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
                       Analyze Competitors
                     </>
                   )}
-                </motion.button>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      }
       
-      {/* Document Link Section */}
       {product.competitorAnalysisUrl && (
-        <div className="bg-white rounded-lg border border-secondary-100 p-3 flex items-center justify-between">
+        <div className="bg-secondary-800 rounded-lg border border-primary-500/20 p-3 flex items-center justify-between mt-4">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-secondary-100 flex items-center justify-center">
-              <FileText size={16} className="text-secondary-600" />
+            <div className="w-8 h-8 rounded-lg bg-secondary-900 border border-primary-500/20 flex items-center justify-center">
+              <FileText size={16} className="text-primary-400" />
             </div>
             <div className="truncate">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-primary-400 truncate">
                 Competitor Analysis Report
               </p>
               <a
                 href={product.competitorAnalysisUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-secondary-600 hover:text-secondary-800 flex items-center w-fit"
+                className="text-xs text-primary-300 hover:text-primary-200 flex items-center w-fit"
               >
                 View Report <ExternalLink size={10} className="ml-1" />
               </a>
@@ -518,7 +528,7 @@ export function CompetitorAnalysis({ product, onUpdate, onUpdateCompetitors }: C
       )}
       
       {!product.competitors && !product.competitorAnalysisUrl && (
-        <p className="text-sm text-gray-500 italic">
+        <p className="text-sm text-gray-400 italic">
           No competitor analysis available yet. Click the button above to generate one.
         </p>
       )}

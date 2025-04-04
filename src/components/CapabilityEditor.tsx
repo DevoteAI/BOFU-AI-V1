@@ -43,36 +43,36 @@ export function CapabilityEditor({ capability, onUpdate, onDelete }: CapabilityE
   if (isEditing) {
     return (
       <motion.div 
-        className="bg-white rounded-xl border border-gray-200 p-6 space-y-4"
+        className="bg-secondary-800 rounded-xl border border-primary-500/20 p-6 space-y-4"
         initial={{ opacity: 0.8, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-primary-400 mb-1">Title</label>
             <input
               type="text"
               value={editedCapability.title}
               onChange={(e) => setEditedCapability({ ...editedCapability, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-secondary-900 border border-primary-500/30 text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Enter capability title"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Brief Description</label>
+            <label className="block text-sm font-medium text-primary-400 mb-1">Brief Description</label>
             <input
               type="text"
               value={editedCapability.description}
               onChange={(e) => setEditedCapability({ ...editedCapability, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-secondary-900 border border-primary-500/30 text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="Enter a brief description"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Content</label>
+            <label className="block text-sm font-medium text-primary-400 mb-1">Detailed Content</label>
             <RichTextEditor
               content={editedCapability.content}
               onChange={(content) => setEditedCapability({ ...editedCapability, content })}
@@ -80,23 +80,30 @@ export function CapabilityEditor({ capability, onUpdate, onDelete }: CapabilityE
             />
           </div>
         </div>
-
-        <div className="flex justify-end gap-2 mt-4">
+        
+        <div className="flex justify-between">
           <button
-            onClick={() => {
-              setEditedCapability(capability);
-              setIsEditing(false);
-            }}
-            className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-1"
+            onClick={() => setIsEditing(false)}
+            className="px-3 py-1.5 text-gray-400 hover:text-gray-300 hover:bg-secondary-700 rounded-lg transition-colors"
           >
-            <X size={16} /> Cancel
+            Cancel
           </button>
-          <button
-            onClick={handleSave}
-            className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1"
-          >
-            <Save size={16} /> Save Changes
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onDelete}
+              className="px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <Trash2 size={16} />
+              Delete
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-3 py-1.5 bg-primary-500 text-secondary-900 rounded-lg hover:bg-primary-400 transition-colors flex items-center gap-1 font-medium"
+            >
+              <Save size={16} />
+              Save
+            </button>
+          </div>
         </div>
       </motion.div>
     );
@@ -104,33 +111,27 @@ export function CapabilityEditor({ capability, onUpdate, onDelete }: CapabilityE
 
   return (
     <motion.div 
-      className="group relative bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-all"
-      initial={{ opacity: 0, y: 20 }}
+      className="bg-secondary-800 backdrop-blur-sm rounded-xl border border-primary-500/20 p-6 hover:shadow-glow transition-all group"
+      initial={{ opacity: 0.8, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      exit={{ opacity: 0, y: -10 }}
     >
-      <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-3 right-3 flex items-center gap-1">
         <button
           onClick={() => setIsEditing(true)}
-          className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+          className="p-1.5 text-primary-400 hover:bg-primary-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
         >
           <Edit2 size={16} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <Trash2 size={16} />
         </button>
       </div>
 
       <div className="space-y-4">
-        <h4 className="text-lg font-semibold text-gray-900">
+        <h4 className="text-lg font-semibold text-primary-400">
           {capability.title.startsWith('Capability') ? capability.title : `Capability #${capability.title}`}
         </h4>
         
         <div className="relative">
-          <p className="text-gray-600">{capability.description}</p>
+          <p className="text-gray-300">{capability.description}</p>
           
           <AnimatePresence>
             {isExpanded && (
@@ -142,7 +143,7 @@ export function CapabilityEditor({ capability, onUpdate, onDelete }: CapabilityE
                 className="mt-4"
               >
                 <div 
-                  className="prose max-w-none text-gray-700"
+                  className="prose max-w-none text-gray-300 prose-headings:text-primary-400 prose-a:text-primary-400"
                   dangerouslySetInnerHTML={{ __html: capability.content }}
                 />
               </motion.div>
@@ -151,7 +152,7 @@ export function CapabilityEditor({ capability, onUpdate, onDelete }: CapabilityE
           
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors"
+            className="mt-2 text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors"
           >
             {isExpanded ? (
               <>Show Less <ChevronUp size={16} /></>

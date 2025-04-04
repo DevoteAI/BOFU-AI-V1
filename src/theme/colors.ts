@@ -1,29 +1,29 @@
 export const colors = {
   primary: {
-    50: '#f0f9ff',
-    100: '#e0f2fe',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9',
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-    950: '#082f49',
+    50: '#FFFDF0',
+    100: '#FFFBE0',
+    200: '#FFF7C2',
+    300: '#FFF176',
+    400: '#FFEE58',
+    500: '#FFE600', // Main yellow
+    600: '#FFD600',
+    700: '#FFC400',
+    800: '#FFB300',
+    900: '#FFA000',
+    950: '#FF8F00',
   },
   secondary: {
-    50: '#f5f3ff',
-    100: '#ede9fe',
-    200: '#ddd6fe',
-    300: '#c4b5fd',
-    400: '#a78bfa',
-    500: '#8b5cf6',
-    600: '#7c3aed',
-    700: '#6d28d9',
-    800: '#5b21b6',
-    900: '#4c1d95',
-    950: '#2e1065',
+    50: '#E8E8E8',
+    100: '#D6D6D6',
+    200: '#B0B0B0',
+    300: '#8A8A8A',
+    400: '#6E6E6E',
+    500: '#525252',
+    600: '#3D3D3D',
+    700: '#2C2C2C',
+    800: '#1F1F1F',
+    900: '#141414',
+    950: '#0A0A0A',
   },
   neutral: {
     50: '#fafafa',
@@ -77,17 +77,53 @@ export const colors = {
     900: '#78350f',
     950: '#451a03',
   },
-  info: {
-    50: '#f0f9ff',
-    100: '#e0f2fe',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9',
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-    950: '#082f49',
+};
+
+export const shadows = {
+  soft: '0 2px 15px rgba(0, 0, 0, 0.15)',
+  medium: '0 4px 20px rgba(0, 0, 0, 0.2)',
+  hard: '0 8px 30px rgba(0, 0, 0, 0.3)',
+  primary: '0 4px 12px rgba(255, 230, 0, 0.2)',
+  secondary: '0 4px 12px rgba(20, 20, 20, 0.3)',
+};
+
+export const gradients = {
+  primary: {
+    default: 'from-primary-500 to-primary-600',
+    subtle: 'from-primary-400 to-primary-500',
+    hover: 'from-primary-600 to-primary-700',
+  },
+  background: {
+    page: 'from-secondary-900 to-secondary-950',
+    card: 'from-secondary-800 to-secondary-900',
+    header: 'from-secondary-950 via-secondary-900 to-secondary-950',
+  },
+  text: {
+    primary: 'from-primary-400 via-primary-500 to-primary-400',
+    secondary: 'from-primary-500 to-primary-600',
+  },
+};
+
+export const colorCombos = {
+  primary: {
+    bg: 'bg-primary-500',
+    text: 'text-secondary-950',
+    hover: 'hover:bg-primary-600',
+    border: 'border-primary-600',
+    ring: 'ring-primary-500',
+  },
+  secondary: {
+    bg: 'bg-secondary-900',
+    text: 'text-white',
+    hover: 'hover:bg-secondary-800',
+    border: 'border-secondary-700',
+    ring: 'ring-secondary-700',
+  },
+  dark: {
+    bg: 'bg-secondary-950',
+    text: 'text-white',
+    hover: 'hover:bg-secondary-900',
+    border: 'border-secondary-800',
+    ring: 'ring-secondary-800',
   },
 };

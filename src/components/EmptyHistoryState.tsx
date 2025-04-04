@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { History, BookOpen, ArrowRight } from 'lucide-react';
+import { ClipboardIcon } from '@heroicons/react/24/outline';
 
 interface EmptyHistoryStateProps {
   onStartNew: () => void;
@@ -9,53 +9,33 @@ interface EmptyHistoryStateProps {
 export function EmptyHistoryState({ onStartNew }: EmptyHistoryStateProps) {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="text-center py-16 px-4"
+      className="text-center py-12"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <div className="mx-auto max-w-md">
-        <motion.div 
-          className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 10, delay: 0.1 }}
+      <div className="flex justify-center">
+        <motion.div
+          className="p-4 rounded-full bg-secondary-800 border-2 border-primary-500/20 shadow-glow"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <History className="w-8 h-8 text-primary-600" />
+          <ClipboardIcon className="w-8 h-8 text-primary-400" />
         </motion.div>
-        
-        <motion.h3 
-          className="mb-2 text-2xl font-bold text-gray-900"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          Your research history is empty
-        </motion.h3>
-        
-        <motion.p 
-          className="mb-8 text-gray-500"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          Start your first research project to see your history here. All your analyses will be saved automatically.
-        </motion.p>
-        
-        <motion.button
-          onClick={onStartNew}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all mx-auto"
-          whileHover={{ scale: 1.03, boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)" }}
-          whileTap={{ scale: 0.97 }}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <BookOpen size={18} />
-          Start Your First Research
-          <ArrowRight size={16} />
-        </motion.button>
       </div>
+      <h3 className="mt-4 text-lg font-medium text-primary-400">No Research History</h3>
+      <p className="mt-2 text-sm text-gray-400">
+        Start your first research to begin building your history.
+      </p>
+      <motion.button
+        onClick={onStartNew}
+        className="mt-6 px-4 py-2 bg-secondary-800 border-2 border-primary-500/20 text-primary-400 rounded-lg hover:bg-secondary-700 
+          transition-all shadow-glow hover:shadow-glow-strong hover:border-primary-500/40"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        Start New Research
+      </motion.button>
     </motion.div>
   );
 } 

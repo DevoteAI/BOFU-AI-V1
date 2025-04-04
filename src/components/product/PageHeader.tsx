@@ -18,10 +18,10 @@ export function PageHeader({ companyName, productCount, onStartNew }: PageHeader
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600">
+          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600">
             {companyName || 'Research Results'}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             {productCount} {productCount === 1 ? 'product' : 'products'} analyzed
           </p>
         </motion.div>
@@ -34,8 +34,8 @@ export function PageHeader({ companyName, productCount, onStartNew }: PageHeader
         >
           <motion.button
             onClick={onStartNew}
-            className="px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all 
-              shadow-sm hover:shadow-lg hover:shadow-primary-100/50 flex items-center gap-2"
+            className="px-4 py-2.5 bg-primary-500 text-secondary-900 rounded-lg hover:bg-primary-400 transition-all 
+              shadow-glow hover:shadow-glow-strong flex items-center gap-2 font-medium"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

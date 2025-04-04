@@ -39,18 +39,18 @@ export function TargetPersona({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-info-100 p-4 hover:shadow-md transition-all group hover:bg-info-50/20">
+    <div className="bg-secondary-900/80 backdrop-blur-sm rounded-xl border border-primary-500/20 p-4 hover:shadow-glow transition-all group hover:bg-primary-500/10">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900">Target Persona</h3>
+        <h3 className="text-lg font-semibold text-primary-400">Target Persona</h3>
         <button
           onClick={toggleExpanded}
-          className="p-1 hover:bg-info-100/50 rounded-lg transition-colors"
+          className="p-1 hover:bg-secondary-800 rounded-lg transition-colors"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? "Collapse target persona" : "Expand target persona"}
         >
           {isExpanded ? 
-            <ChevronUp className="text-gray-500" /> : 
-            <ChevronDown className="text-gray-500" />
+            <ChevronUp className="text-gray-400" /> : 
+            <ChevronDown className="text-gray-400" />
           }
         </button>
       </div>
@@ -100,7 +100,7 @@ export function TargetPersona({
             </p>
             <button
               onClick={toggleExpanded}
-              className="mt-1 text-xs text-primary-600 hover:text-primary-700 flex items-center"
+              className="mt-1 text-xs text-primary-400 hover:text-primary-300 flex items-center"
             >
               View all details
             </button>

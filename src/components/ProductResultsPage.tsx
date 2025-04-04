@@ -16,7 +16,7 @@ interface ProductResultsPageProps {
   forceHistoryView?: () => void;
 }
 
-export function ProductResultsPage({ 
+function ProductResultsPage({ 
   products, 
   onStartNew, 
   existingId,
@@ -90,13 +90,55 @@ export function ProductResultsPage({
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-dark bg-circuit-board">
       {/* Header Section */}
       <PageHeader 
         companyName={editedProducts[0]?.companyName} 
         productCount={editedProducts.length}
         onStartNew={onStartNew}
       />
+
+      {/* Instructions Panel */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="bg-secondary-900/80 backdrop-blur-sm rounded-xl border-2 border-primary-500/20 shadow-glow p-6">
+          <div className="flex items-start space-x-4">
+            <div className="min-w-[24px] mt-1">
+              <div className="w-6 h-6 rounded-full bg-secondary-800 border border-primary-500/30 flex items-center justify-center">
+                <span className="text-sm font-semibold text-primary-400">i</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-primary-400 mb-2">How to Complete Your Analysis</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary-800 border border-primary-500/30 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-400">1</span>
+                  </div>
+                  <p>Click <span className="font-medium text-primary-400">Identify Competitors</span> to let AI automatically discover and analyze your competitors</p>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary-800 border border-primary-500/30 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-400">2</span>
+                  </div>
+                  <p>Optionally, use <span className="font-medium text-primary-400">Add Competitor Manually</span> to include additional competitors you know</p>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary-800 border border-primary-500/30 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-400">3</span>
+                  </div>
+                  <p>Click <span className="font-medium text-primary-400">Analyze Competitors</span> to generate a detailed competitive analysis report</p>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-secondary-800 border border-primary-500/30 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-400">4</span>
+                  </div>
+                  <p>Finally, click <span className="font-medium text-primary-500">Save Analysis</span> to preserve your results</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -122,3 +164,5 @@ export function ProductResultsPage({
     </div>
   );
 }
+
+export { ProductResultsPage };

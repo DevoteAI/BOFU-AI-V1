@@ -36,14 +36,14 @@ export function Capabilities({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-success-100 p-4 hover:shadow-md transition-all group hover:bg-success-50/20">
+    <div className="bg-secondary-900/80 backdrop-blur-sm rounded-xl border border-primary-500/20 p-4 hover:shadow-glow transition-all group hover:bg-primary-500/10">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900">Capabilities</h3>
+          <h3 className="text-lg font-semibold text-primary-400">Capabilities</h3>
           {isExpanded && (
             <button
               onClick={addCapability}
-              className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex items-center gap-1 text-sm"
+              className="p-1.5 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-colors flex items-center gap-1 text-sm"
             >
               <Plus size={16} /> Add
             </button>
@@ -51,13 +51,13 @@ export function Capabilities({
         </div>
         <button
           onClick={toggleExpanded}
-          className="p-1 hover:bg-success-100/50 rounded-lg transition-colors"
+          className="p-1 hover:bg-secondary-800 rounded-lg transition-colors"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? "Collapse capabilities" : "Expand capabilities"}
         >
           {isExpanded ? 
-            <ChevronUp className="text-gray-500" /> : 
-            <ChevronDown className="text-gray-500" />
+            <ChevronUp className="text-gray-400" /> : 
+            <ChevronDown className="text-gray-400" />
           }
         </button>
       </div>
@@ -78,9 +78,9 @@ export function Capabilities({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No capabilities added yet.</p>
-                <p className="text-sm text-gray-400">Click "Add" to get started.</p>
+                <Sparkles className="w-12 h-12 text-primary-500/30 mx-auto mb-3" />
+                <p className="text-gray-400">No capabilities added yet.</p>
+                <p className="text-sm text-gray-500">Click "Add" to get started.</p>
               </motion.div>
             ) : (
               <div className="grid gap-4 relative">
@@ -116,7 +116,7 @@ export function Capabilities({
             </p>
             <button
               onClick={toggleExpanded}
-              className="mt-1 text-xs text-primary-600 hover:text-primary-700 flex items-center"
+              className="mt-1 text-xs text-primary-400 hover:text-primary-300 flex items-center"
             >
               {capabilities.length > 0 ? 'View capabilities' : 'Add capabilities'}
             </button>
