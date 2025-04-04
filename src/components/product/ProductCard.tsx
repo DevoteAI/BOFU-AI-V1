@@ -13,6 +13,7 @@ interface ProductCardProps {
   product: ProductAnalysis;
   index: number;
   isSaving: boolean;
+  savingProductIndex: number | null;
   onSave: (product: ProductAnalysis, index: number) => Promise<void>;
   onUpdateSection: (productIndex: number, section: keyof ProductAnalysis, value: any) => void;
   updateProduct: (product: ProductAnalysis) => void;
@@ -23,6 +24,7 @@ function ProductCard({
   product,
   index,
   isSaving,
+  savingProductIndex,
   onSave,
   onUpdateSection,
   updateProduct,
@@ -75,6 +77,9 @@ function ProductCard({
     current[path[path.length - 1]] = value;
     return newObj;
   };
+
+  // Check if this specific product is being saved
+  const isThisProductSaving = isSaving && savingProductIndex === index;
 
   return (
     <motion.article
@@ -217,7 +222,7 @@ function ProductCard({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {isSaving ? (
+            {isThisProductSaving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...

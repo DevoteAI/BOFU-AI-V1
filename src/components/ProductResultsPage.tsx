@@ -14,6 +14,7 @@ interface ProductResultsPageProps {
   showHistory?: boolean;
   setShowHistory?: (show: boolean) => void;
   forceHistoryView?: () => void;
+  onHistorySave?: () => Promise<void>;
 }
 
 function ProductResultsPage({ 
@@ -22,10 +23,12 @@ function ProductResultsPage({
   existingId,
   showHistory,
   setShowHistory,
-  forceHistoryView
+  forceHistoryView,
+  onHistorySave
 }: ProductResultsPageProps) {
   const [editedProducts, setEditedProducts] = React.useState(products);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [savingProductIndex, setSavingProductIndex] = React.useState<number | null>(null);
 
   // Add logging for component mounting and prop changes
   React.useEffect(() => {
@@ -61,6 +64,7 @@ function ProductResultsPage({
   }, [editedProducts]);
 
   const handleSaveProduct = async (product: ProductAnalysis, index: number) => {
+    setSavingProductIndex(index);
     setIsSaving(true);
     try {
       const title = `${product.companyName} - ${product.productDetails.name}`;
@@ -72,11 +76,17 @@ function ProductResultsPage({
       }
       
       toast.success(existingId ? 'Product updated successfully!' : 'Product saved successfully!');
+      
+      // After successful save, refresh the history in the background without redirecting
+      if (onHistorySave) {
+        await onHistorySave();
+      }
     } catch (error) {
       console.error('Error saving product:', error);
       toast.error(existingId ? 'Failed to update product. Please try again.' : 'Failed to save product. Please try again.');
     } finally {
       setIsSaving(false);
+      setSavingProductIndex(null);
     }
   };
   
@@ -149,6 +159,7 @@ function ProductResultsPage({
               product={product}
               index={index}
               isSaving={isSaving}
+              savingProductIndex={savingProductIndex}
               onSave={handleSaveProduct}
               onUpdateSection={updateProductSection}
               updateProduct={(updatedProduct) => {
