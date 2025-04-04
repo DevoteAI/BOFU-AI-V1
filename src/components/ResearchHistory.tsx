@@ -27,6 +27,14 @@ export function ResearchHistory({
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('desc');
   
+  // Log when results change
+  React.useEffect(() => {
+    console.log('📜 ResearchHistory component received updated results:', { 
+      count: results.length,
+      items: results.map(r => ({ id: r.id, title: r.title }))
+    });
+  }, [results]);
+  
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the parent onClick
     
