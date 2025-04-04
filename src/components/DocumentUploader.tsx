@@ -333,25 +333,41 @@ To process this document, please export it from Google Docs as PDF or DOCX forma
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-6">
       <motion.div
-        {...getRootProps()}
-        className={`relative overflow-hidden border-2 border-dashed rounded-xl p-8 transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer group ${
+        className={`relative overflow-hidden border-2 border-dashed rounded-xl p-8 transition-all duration-300 flex flex-col items-center justify-center text-center cursor-pointer shadow-lg ${
           isDragActive 
-            ? 'border-primary-500 bg-primary-50' 
-            : 'border-neutral-300 hover:border-primary-400 hover:bg-blue-50'
+            ? 'border-primary-400 bg-primary-500/10 shadow-primary-500/20' 
+            : 'border-primary-500/20 hover:border-primary-400/50 bg-secondary-800/50 hover:bg-secondary-800/80 hover:shadow-primary-500/10'
         }`}
-        whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)' }}
+        initial={{ y: 0 }}
+        animate={{ y: 0 }}
+        whileHover={{ y: -4 }}
         transition={{ duration: 0.3 }}
       >
-        <input {...getInputProps()} />
+        <div {...getRootProps()} className="absolute inset-0 z-20">
+          <input {...getInputProps()} />
+        </div>
         
         {/* Animated background gradient */}
         <div 
-          className={`absolute inset-0 bg-gradient-to-br from-primary-50 to-secondary-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+          className={`absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
             isDragActive ? 'opacity-100' : ''
           }`}
-        ></div>
+        />
+        
+        <motion.div
+          className="absolute -top-24 -right-24 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.2, 0.3]
+          }}
+          transition={{ 
+            duration: 8,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        />
         
         <motion.div 
           className="relative z-10 flex flex-col items-center"
@@ -360,35 +376,35 @@ To process this document, please export it from Google Docs as PDF or DOCX forma
           transition={{ duration: 0.5 }}
         >
           <motion.div
-            className={`mb-4 p-4 rounded-full ${isDragActive ? 'bg-primary-100' : 'bg-blue-50'} group-hover:bg-primary-100 transition-colors duration-300`}
-            whileHover={{ scale: 1.05 }}
+            className={`mb-5 p-4 rounded-full ${isDragActive ? 'bg-primary-500/20' : 'bg-primary-500/10'} hover:bg-primary-500/20 transition-colors duration-300`}
+            whileHover={{ scale: 1.05, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
           >
             <Upload 
-              className={`transition-colors duration-300 ${isDragActive ? 'text-primary-600' : 'text-primary-400'} group-hover:text-primary-600`} 
+              className={`transition-colors duration-300 ${isDragActive ? 'text-primary-400' : 'text-primary-400/80'} hover:text-primary-300`} 
               size={36} 
             />
           </motion.div>
           
           <motion.h3 
             className={`text-xl font-medium mb-2 transition-colors duration-300 ${
-              isDragActive ? 'text-primary-700' : 'text-gray-800'
-            } group-hover:text-primary-700`}
+              isDragActive ? 'text-primary-300' : 'text-primary-400/90'
+            } hover:text-primary-300`}
           >
             {isDragActive ? 'Drop files here' : 'Drag & drop your files'}
           </motion.h3>
           
           <motion.p 
-            className="text-sm text-neutral-500 max-w-md mb-4 group-hover:text-neutral-600 transition-colors duration-300"
+            className="text-sm text-gray-400 max-w-md mb-4 hover:text-gray-300 transition-colors duration-300"
           >
             Supports PDF, Word, PowerPoint, or text files. We'll automatically extract and process the content.
           </motion.p>
           
           <motion.button 
             type="button"
-            className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-yellow-500 text-secondary-900 font-medium rounded-lg hover:shadow-glow transition-all"
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.97, y: 0 }}
           >
             Browse Files
           </motion.button>
@@ -397,24 +413,26 @@ To process this document, please export it from Google Docs as PDF or DOCX forma
 
       {documents.length > 0 && (
         <motion.div 
-          className="mt-6 space-y-2"
+          className="mt-8 space-y-3"
           variants={container}
           initial="hidden"
           animate="show"
         >
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-medium">Documents</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-primary-300">Uploaded Documents</h3>
             {documents.length > 1 && (
-              <button 
+              <motion.button 
                 onClick={() => {
                   setDocuments([]);
                   onDocumentsProcessed([]);
                 }}
-                className="text-sm text-red-600 hover:text-red-800 flex items-center"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-400 hover:text-red-300 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <Trash2 size={14} className="mr-1" />
+                <Trash2 size={14} />
                 Remove all
-              </button>
+              </motion.button>
             )}
           </div>
           
@@ -425,25 +443,25 @@ To process this document, please export it from Google Docs as PDF or DOCX forma
                 variants={item}
                 exit={{ opacity: 0, x: -100 }}
                 layout
-                className="flex items-center justify-between p-4 bg-white border border-neutral-200 rounded-xl hover:shadow-md transition-all"
+                className="flex items-center justify-between p-4 bg-secondary-800/80 border border-primary-500/10 rounded-xl hover:shadow-glow-sm hover:border-primary-500/20 transition-all"
                 whileHover={{ x: 4 }}
               >
                 <div className="flex items-center flex-1 min-w-0">
                   <div className={`w-10 h-10 flex-shrink-0 rounded-lg flex items-center justify-center mr-3 ${
                     doc.status === 'processed' 
                       ? doc.isGoogleDoc 
-                        ? 'bg-warning-100 text-warning-600' 
+                        ? 'bg-yellow-500/20 text-yellow-300' 
                         : doc.usedAI 
-                          ? 'bg-secondary-100 text-secondary-600' 
-                          : 'bg-success-100 text-success-600' 
+                          ? 'bg-indigo-500/20 text-indigo-300' 
+                          : 'bg-green-500/20 text-green-300' 
                       : doc.status === 'error' 
-                        ? 'bg-error-100 text-error-600' 
-                        : 'bg-neutral-100 text-neutral-600'
+                        ? 'bg-red-500/20 text-red-300' 
+                        : 'bg-blue-500/20 text-blue-300'
                   }`}>
                     <File size={18} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-medium text-gray-200 truncate">
                       {doc.name}
                     </p>
                     <div className="flex items-center">
@@ -451,24 +469,24 @@ To process this document, please export it from Google Docs as PDF or DOCX forma
                         <div className="w-3 h-3 rounded-full border-2 border-primary-500 border-t-transparent animate-spin mr-2"></div>
                       )}
                       {doc.status === 'processed' && doc.isGoogleDoc && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                           Google Docs
                         </span>
                       )}
                       {doc.status === 'processed' && doc.usedAI && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                           <Image size={10} className="mr-1" />
                           AI-processed
                         </span>
                       )}
                       {doc.status === 'processed' && !doc.isGoogleDoc && !doc.usedAI && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           <CheckCircle size={10} className="mr-1" />
                           Processed
                         </span>
                       )}
                       {doc.status === 'error' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-error-100 text-error-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           <AlertTriangle size={10} className="mr-1" />
                           Error
                         </span>

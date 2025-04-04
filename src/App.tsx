@@ -411,24 +411,49 @@ export default function App() {
               forceHistoryView={forceHistoryView}
             />
             <ProcessingModal isOpen={isSubmitting} />
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative pt-8">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative pt-8 pb-16">
               <Header />
-              <div className="mt-8 space-y-12">
-                <div className="bg-secondary-900 border-2 border-primary-500/20 p-8 rounded-xl shadow-glow">
-                  <h2 className="text-2xl font-bold mb-8 text-primary-400">Upload Your Research Sources</h2>
+              <div className="mt-10 space-y-12">
+                <motion.div 
+                  className="bg-gradient-to-b from-secondary-900 to-secondary-800 border-2 border-primary-500/30 p-10 rounded-2xl shadow-glow-lg relative overflow-hidden"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-500/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none" />
                   
-                  <div className="space-y-10">
+                  <motion.h2 
+                    className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary-400 to-yellow-400 bg-clip-text text-transparent inline-block"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    Upload Your Research Sources
+                  </motion.h2>
+                  
+                  <motion.p 
+                    className="text-gray-400 mb-8"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    Add your documents, blog links, and product information for comprehensive analysis
+                  </motion.p>
+                  
+                  <div className="space-y-12 relative z-10">
                     <DocumentUploader onDocumentsProcessed={handleDocumentsProcessed} />
                     
-                    <div className="border-t border-secondary-800 pt-8">
+                    <div className="border-t border-secondary-700/50 pt-10">
                       <BlogLinkInput onBlogLinksChange={handleBlogLinksChange} />
                     </div>
                     
-                    <div className="border-t border-secondary-800 pt-8">
+                    <div className="border-t border-secondary-700/50 pt-10">
                       <ProductLineInput onProductLinesChange={handleProductLinesChange} />
                     </div>
                     
-                    <div className="border-t border-secondary-800 pt-8">
+                    <div className="border-t border-secondary-700/50 pt-10">
                       <SubmitSection 
                         isDisabled={!isFormValid()} 
                         isSubmitting={isSubmitting} 
@@ -436,7 +461,7 @@ export default function App() {
                       />
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>

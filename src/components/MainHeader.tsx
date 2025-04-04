@@ -34,6 +34,20 @@ export function MainHeader({
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const [user, setUser] = React.useState(propUser);
 
+  // Helper function to get display name
+  const getDisplayName = (userData: any) => {
+    // First check user_metadata.company_name
+    if (userData?.user_metadata?.company_name) {
+      return userData.user_metadata.company_name;
+    }
+    // If no company_name in user_metadata, check app_metadata.company_name (used in some Supabase setups)
+    if (userData?.app_metadata?.company_name) {
+      return userData.app_metadata.company_name;
+    }
+    // Fallback to email
+    return userData?.email || 'User';
+  };
+
   React.useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,65 +62,85 @@ export function MainHeader({
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignOut = () => {
-    // Implement sign out logic
-    console.log("Signing out");
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      console.log("Signed out successfully");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-secondary-900/80 border-b border-primary-500/20">
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-gradient-to-r from-secondary-900/95 to-secondary-800/95 border-b border-primary-500/30 shadow-lg">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="flex items-center gap-2">
-                <Logo />
-                <span className="text-xl font-bold text-primary-400">BOFU AI</span>
+            <motion.div 
+              className="flex-shrink-0 flex items-center"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Link to="/" className="flex items-center gap-3 group">
+                <motion.div
+                  whileHover={{ rotate: 15, scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <Logo />
+                </motion.div>
+                <span className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-primary-400 bg-clip-text text-transparent group-hover:from-yellow-300 group-hover:to-primary-300 transition-all">BOFU AI</span>
               </Link>
-            </div>
+            </motion.div>
           </div>
           <div className="flex items-center gap-4">
             {showHistory !== undefined && setShowHistory && (
-              <button
+              <motion.button
                 onClick={() => {
                   console.log("History button clicked in MainHeader");
                   setShowHistory(!showHistory);
                 }}
                 className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2
                   ${showHistory 
-                    ? 'bg-secondary-800 text-primary-400 border-2 border-primary-500/20 shadow-glow hover:shadow-glow-strong hover:border-primary-500/40' 
-                    : 'text-gray-400 hover:text-primary-400 hover:bg-secondary-800'
+                    ? 'bg-gradient-to-r from-secondary-800 to-secondary-700 text-primary-300 border border-primary-500/30 shadow-glow hover:shadow-glow-strong' 
+                    : 'text-gray-300 hover:text-primary-300 hover:bg-secondary-800/70'
                   }`}
+                whileHover={{ y: -1 }}
+                whileTap={{ y: 1 }}
               >
                 <ClockIcon className="h-5 w-5" />
                 History
-              </button>
+              </motion.button>
             )}
             {user ? (
               <Menu as="div" className="relative">
-                <Menu.Button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary-800 text-gray-400 hover:text-primary-400">
+                <Menu.Button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-secondary-800/70 text-gray-300 hover:text-primary-300 border border-transparent hover:border-primary-500/20 transition-all">
                   <UserCircleIcon className="h-6 w-6" />
-                  <span>{user.email}</span>
+                  <span className="max-w-[150px] truncate">
+                    {getDisplayName(user)}
+                  </span>
                 </Menu.Button>
                 <Transition
                   as={Fragment}
-                  enter="transition ease-out duration-100"
+                  enter="transition ease-out duration-200"
                   enterFrom="transform opacity-0 scale-95"
                   enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
+                  leave="transition ease-in duration-150"
                   leaveFrom="transform opacity-100 scale-100"
                   leaveTo="transform opacity-0 scale-95"
                 >
-                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg bg-secondary-800 border-2 border-primary-500/20 shadow-glow">
+                  <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg bg-gradient-to-b from-secondary-800 to-secondary-700 border border-primary-500/30 shadow-glow overflow-hidden">
                     <div className="py-1">
                       <Menu.Item>
                         {({ active }: { active: boolean }) => (
                           <button
                             onClick={handleSignOut}
                             className={`${
-                              active ? 'bg-secondary-700 text-primary-400' : 'text-gray-400'
-                            } group flex w-full items-center px-4 py-2`}
+                              active ? 'bg-secondary-600/30 text-primary-300' : 'text-gray-300'
+                            } group flex w-full items-center gap-2 px-4 py-3 text-sm transition-colors`}
                           >
+                            <LogIn size={16} className="opacity-70" />
                             Sign Out
                           </button>
                         )}
@@ -116,13 +150,15 @@ export function MainHeader({
                 </Transition>
               </Menu>
             ) : (
-              <button
+              <motion.button
                 onClick={onStartNew}
-                className="px-4 py-2 bg-secondary-800 border-2 border-primary-500/20 text-primary-400 rounded-lg hover:bg-secondary-700 
-                  transition-all shadow-glow hover:shadow-glow-strong hover:border-primary-500/40"
+                className="px-5 py-2 bg-gradient-to-r from-primary-500/80 to-yellow-500/80 text-secondary-900 font-medium rounded-lg 
+                  transition-all shadow-md hover:shadow-glow-strong hover:from-primary-500 hover:to-yellow-500"
+                whileHover={{ y: -1, scale: 1.02 }}
+                whileTap={{ y: 1, scale: 0.98 }}
               >
                 Sign In
-              </button>
+              </motion.button>
             )}
           </div>
         </div>

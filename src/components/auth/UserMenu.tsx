@@ -16,6 +16,16 @@ interface UserMenuProps {
 
 export function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Helper function to get display name
+  const getDisplayName = () => {
+    // First check user_metadata.company_name
+    if (user?.user_metadata?.company_name) {
+      return user.user_metadata.company_name;
+    }
+    // Fallback to email
+    return user?.email || 'User';
+  };
 
   const handleSignOut = async () => {
     try {
@@ -37,7 +47,7 @@ export function UserMenu({ user }: UserMenuProps) {
           {user.user_metadata.avatar_url ? (
             <img
               src={user.user_metadata.avatar_url}
-              alt={user.user_metadata.company_name || user.email}
+              alt={getDisplayName()}
               className="w-full h-full rounded-full object-cover"
             />
           ) : (
@@ -45,7 +55,7 @@ export function UserMenu({ user }: UserMenuProps) {
           )}
         </div>
         <span className="text-sm font-medium">
-          {user.user_metadata.company_name || user.email}
+          {getDisplayName()}
         </span>
       </button>
 
