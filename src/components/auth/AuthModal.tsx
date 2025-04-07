@@ -6,9 +6,10 @@ import toast from 'react-hot-toast';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onShowAdminLogin?: () => void;
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, onShowAdminLogin }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(isOpen);
@@ -214,6 +215,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
+  const handleAdminLogin = () => {
+    if (onShowAdminLogin) {
+      onShowAdminLogin();
+    }
+  };
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -320,6 +327,19 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       </div>
                     </div>
                   </form>
+                  
+                  {/* Admin Login option */}
+                  {onShowAdminLogin && (
+                    <div className="mt-4 text-center">
+                      <button
+                        type="button"
+                        onClick={handleAdminLogin}
+                        className="text-sm text-primary-400 hover:text-primary-300"
+                      >
+                        Admin Login
+                      </button>
+                    </div>
+                  )}
                   
                   <div className="mt-4 text-center">
                     <button

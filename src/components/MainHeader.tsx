@@ -22,6 +22,7 @@ interface MainHeaderProps {
   onStartNew?: () => void;
   user?: any;
   forceHistoryView?: () => void;
+  onShowAuthModal?: () => void;
 }
 
 export function MainHeader({ 
@@ -29,7 +30,8 @@ export function MainHeader({
   setShowHistory, 
   onStartNew, 
   user: propUser,
-  forceHistoryView 
+  forceHistoryView,
+  onShowAuthModal
 }: MainHeaderProps) {
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const [user, setUser] = React.useState(propUser);
@@ -151,7 +153,7 @@ export function MainHeader({
               </Menu>
             ) : (
               <motion.button
-                onClick={onStartNew}
+                onClick={() => onShowAuthModal ? onShowAuthModal() : setShowAuthModal(true)}
                 className="px-5 py-2 bg-gradient-to-r from-primary-500/80 to-yellow-500/80 text-secondary-900 font-medium rounded-lg 
                   transition-all shadow-md hover:shadow-glow-strong hover:from-primary-500 hover:to-yellow-500"
                 whileHover={{ y: -1, scale: 1.02 }}
@@ -163,6 +165,7 @@ export function MainHeader({
           </div>
         </div>
       </nav>
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </header>
   );
 }
