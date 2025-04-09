@@ -160,11 +160,17 @@ export default function App() {
         setUser(null);
         setIsAdmin(false);
         setShowAuthModal(true);
-        // Reset view to auth when logged out
+        // Reset view to auth when logged out - ensure this runs before any redirects
         setCurrentView('auth');
         // Reset other state as needed
         setShowHistory(false);
         setResearchHistory([]);
+        
+        // If we're handling a logout event (not just a session expiration), 
+        // make sure the UI state is updated before any redirects happen
+        if (_event === 'SIGNED_OUT') {
+          console.log('User signed out - resetting app state');
+        }
       }
     });
 
@@ -230,18 +236,20 @@ export default function App() {
   // --- Callback for when ProductResultsPage saves a NEW analysis --- 
   const handleSaveComplete = (newId: string) => {
     console.log(`[App] Received new research ID from ProductResultsPage: ${newId}`);
-    setCurrentResearchId(newId); 
-    // Optionally, refetch the specific result if needed immediately, though onHistorySave should handle list refresh
-    // loadSpecificResult(newId); 
+    // Just store the ID, do nothing else
+    setCurrentResearchId(newId);
+    // NO view changes or history navigation
   };
 
   const handleSelectHistoryItem = async (result: ResearchResult) => {
     console.log('[App] Selecting history item:', result.id);
+    console.log('[App] Item data array length:', result.data.length, 'items');
     setIsLoading(true);
     try {
       // Fetch the full data again in case it was truncated or needs refresh
       const fullResult = await getResearchResultById(result.id);
       if (fullResult) {
+        console.log('[App] Loaded full result, contains', fullResult.data.length, 'products');
         setAnalysisResults(fullResult.data || []);
         setCurrentResearchId(fullResult.id);
         setCurrentView('results');
@@ -325,32 +333,11 @@ export default function App() {
       setCurrentResearchId(undefined); // Clear previous ID when starting new analysis
       setCurrentView('results');
       
-      // Save to history
-      if (user && results.length > 0) {
-        try {
-          // Create a title from the product lines
-          const title = productLines.join(", ").substring(0, 100) + 
-            (productLines.join(", ").length > 100 ? "..." : "");
-          
-          // Save to Supabase directly with the format it expects
-          const { error } = await supabase
-            .from('research_results')
-            .insert([{ 
-              user_id: user.id,
-              title,
-              data: results,  // Just pass the results directly as ProductAnalysis[]
-              is_draft: false
-            }]);
-          
-          if (error) {
-            console.error('Error saving to history:', error);
-        } else {
-            console.log('Successfully saved to history');
-          }
-        } catch (historyError) {
-          console.error('Failed to save to history:', historyError);
-        }
-      }
+      // Remove automatic saving of entire collection
+      // Users should explicitly save what they want through the Save button on cards
+      // This prevents duplicate entries in history
+      
+      console.log('Analysis completed - results ready for review. User can now save individual products.');
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('An error occurred while analyzing the product data.');
@@ -508,13 +495,15 @@ export default function App() {
               forceHistoryView={forceHistoryView}
             onShowAuthModal={handleShowAuthModal}
           />
+            <div className="flex-1 bg-gradient-dark bg-circuit-board">
               <ResearchHistory
                 results={researchHistory}
-            isLoading={isLoading}
+                isLoading={isLoading}
                 onSelect={handleSelectHistoryItem}
                 onDelete={handleDeleteResult}
                 onStartNew={handleStartNew}
               />
+            </div>
           </div>
         );
     }
@@ -565,6 +554,24 @@ export default function App() {
           </div>
         );
   };
+  
+  // Add a global navigation handler to detect when the user manually tries to go to the home page
+  // This helps catch redirects from logout actions
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // When navigating away, check if we're logging out
+      if (document.location.pathname === '/' && user) {
+        console.log('Navigation detected - clearing local session data');
+        // Force clear any session data to prevent getting stuck
+        localStorage.removeItem('supabase.auth.token');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
   
   return (
     <div className="bg-secondary-900 text-white">

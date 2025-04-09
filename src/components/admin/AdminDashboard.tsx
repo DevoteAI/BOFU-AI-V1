@@ -281,10 +281,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   }, [refreshCounter]); // Dependency on refreshCounter to allow manual refresh
 
   const handleLogout = async () => {
+    // First sign out
     await supabase.auth.signOut();
-    // Redirect to home page after logout
-    window.location.href = '/';
-    // Also call the onLogout prop to update parent component state
+    // Force a hard redirect that ensures a complete page reload
+    window.location.assign('/');
+    // This may not execute due to the redirect but kept for completeness
     onLogout();
   };
 

@@ -66,12 +66,16 @@ export function MainHeader({
 
   const handleSignOut = async () => {
     try {
+      // First sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       console.log("Signed out successfully");
-      // Force a page refresh for consistent behavior across the app
-      window.location.href = '/';
-      // Also call other necessary state updates
+      
+      // Do a hard redirect to force a complete page reload and navigation
+      window.location.assign('/');
+      
+      // These state updates likely won't execute due to the redirect,
+      // but we'll keep them for completeness
       if (onShowAuthModal) {
         onShowAuthModal();
       }

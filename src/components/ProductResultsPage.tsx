@@ -80,8 +80,16 @@ function ProductResultsPage({
     setIsSaving(true); // Use general saving flag for simplicity or keep separate if needed
     
     try {
-      // Determine title (using the first product usually)
-      const title = `${updatedProductsData[0]?.companyName || 'Unknown'} - ${updatedProductsData[0]?.productDetails?.name || 'Product'}`;
+      // Determine title based on whether we're saving a single product or multiple products
+      let title;
+      if (updatedProductsData.length === 1) {
+        // For a single product, use a simple title format
+        title = `${updatedProductsData[0]?.companyName || 'Unknown'} - ${updatedProductsData[0]?.productDetails?.name || 'Product'}`;
+      } else {
+        // For multiple products, indicate the count
+        title = `${updatedProductsData[0]?.companyName || 'Unknown'} - ${updatedProductsData.length} Products`;
+      }
+      
       let operationPerformed: 'insert' | 'update' = 'update';
       let currentId = existingId;
 
@@ -89,7 +97,11 @@ function ProductResultsPage({
         // --- UPDATE --- 
         console.log(`[ProductResultsPage] Updating existing result ID: ${currentId}`);
         await updateResearchResults(currentId, updatedProductsData, title);
-        toast.success(isApprovalAction ? 'Product approved successfully!' : 'Analysis updated successfully!');
+        toast.success(isApprovalAction 
+          ? 'Product approved successfully!' 
+          : updatedProductsData.length === 1 
+            ? `Saved "${updatedProductsData[0]?.productDetails?.name || 'Product'}" analysis` 
+            : `Updated ${updatedProductsData.length} products analysis`);
       } else {
         // --- INSERT --- 
         console.log('[ProductResultsPage] No existing ID, saving as new result...');
@@ -97,7 +109,11 @@ function ProductResultsPage({
         // Ensure is_draft is false if saving via approve
         const newId = await saveResearchResults(updatedProductsData, title, false);
         currentId = newId; // Store the new ID
-        toast.success(isApprovalAction ? 'Product saved and approved successfully!' : 'Analysis saved successfully!');
+        toast.success(isApprovalAction 
+          ? 'Product saved and approved successfully!' 
+          : updatedProductsData.length === 1 
+            ? `Saved "${updatedProductsData[0]?.productDetails?.name || 'Product'}" to history` 
+            : `Saved ${updatedProductsData.length} products to history`);
         // IMPORTANT: Notify parent about the new ID
         if (onSaveComplete) {
           console.log(`[ProductResultsPage] Calling onSaveComplete with new ID: ${newId}`);
@@ -110,8 +126,9 @@ function ProductResultsPage({
       // Update local state AFTER successful DB operation
       setEditedProducts(updatedProductsData);
 
-      // Refresh history list if callback provided
+      // Refresh history list if callback provided without navigation
       if (onHistorySave) {
+        // Just refresh the history data in the background without navigating
         await onHistorySave();
       }
       
@@ -125,14 +142,44 @@ function ProductResultsPage({
       if (productIndexToMarkLoading !== null) {
         setActionLoadingIndex(null);
       }
-       setIsSaving(false); 
+      setIsSaving(false); 
     }
   };
 
   // --- Original Save Button Handler --- 
+  // When clicking "Save" on a specific product card, we only want to save that 
+  // specific product, not all products. This ensures that history entries contain 
+  // only individual products, not collections of products.
   const handleSaveProduct = async (product: ProductAnalysis, index: number) => {
-    // Simply calls the consolidated function without approval flags
-    await performSaveOrUpdate(index, editedProducts, false);
+    // Create a deep clone of the product using JSON to ensure no references are shared
+    const productDeepCopy = JSON.parse(JSON.stringify(product));
+    // Create a new array containing only the selected product
+    const singleProductArray = [productDeepCopy];
+    console.log(`[ProductResultsPage] Saving only single product: "${product.productDetails?.name}" (from index ${index})`);
+    console.log(`[ProductResultsPage] Saving array length: ${singleProductArray.length}`);
+    
+    // Call saveResearchResults directly instead of going through performSaveOrUpdate
+    // This ensures we don't override the existing collection or trigger navigation
+    try {
+      // Use the direct function that doesn't update any shared state
+      const result = await saveResearchResults(singleProductArray, 
+        `${product.companyName || 'Unknown'} - ${product.productDetails?.name || 'Product'}`, 
+        false);
+      
+      // Just show success toast without any navigation
+      toast.success(`Saved "${product.productDetails?.name || 'Product'}" to history`);
+      
+      // Refresh history list in the background if callback provided
+      if (onHistorySave) {
+        console.log(`[ProductResultsPage] Refreshing history data in background`);
+        await onHistorySave();
+      }
+      
+      console.log(`[ProductResultsPage] Product saved successfully with ID: ${result}`);
+    } catch (error: any) {
+      console.error('Error saving single product:', error);
+      toast.error(`Failed to save product: ${error.message}`);
+    }
   };
 
   // --- Modified Approve Button Handler --- 
@@ -147,69 +194,72 @@ function ProductResultsPage({
       
       // First step: Create a clean product object without any previous approval data
       // This ensures we don't have old or conflicting approval metadata
-      const cleanedProduct = {...productToApprove};
+      const cleanedProduct = JSON.parse(JSON.stringify(productToApprove)); // Deep clone to avoid reference issues
       delete cleanedProduct.isApproved;
       delete cleanedProduct.approvedBy;
       
-      // Create the NEW data array with the product marked as approved
-      const updatedProductsArray = editedProducts.map((p, i) => { 
-        if (i === index) {
-          // Make sure we explicitly set these properties at the top level of the product object
-          return {
-            ...cleanedProduct, // Use the cleaned product without old approval data
-            isApproved: true, // Always ensure this is a boolean true
-            approvedBy: user.id || 'unknown', // Fallback to 'unknown' if user ID is missing
-            approvedAt: new Date().toISOString() // Add timestamp for when approval happened
-          };
-        }
-        return p; // Return other products unmodified
-      });
+      // Add approval data to the single product
+      const approvedProduct = {
+        ...cleanedProduct,
+        isApproved: true,
+        approvedBy: user.id || 'unknown',
+        approvedAt: new Date().toISOString()
+      };
       
-      console.log(`[ProductResultsPage] Updated product at index ${index} with approval:`, 
-        JSON.stringify(updatedProductsArray[index], null, 2));
-
-      // Call the consolidated save/update function with the modified data
-      const result = await performSaveOrUpdate(index, updatedProductsArray, true);
-      
-      if (result.success) {
-        console.log(`[ProductResultsPage] Successfully saved approved product with operation: ${result.operation}`);
+      try {
+        let resultId;
         
-        // Now also save to the dedicated approved_products table
-        try {
-          if (!result.id) {
-            throw new Error('Failed to get research result ID');
-          }
-          
-          // Add to the approved_products table
-          await saveApprovedProduct(
-            result.id, 
-            updatedProductsArray[index], 
-            index,
-            user.id
-          );
-          
-          console.log(`[ProductResultsPage] Successfully added product to approved_products table`);
-        } catch (approvedError: any) {
-          console.error('[ProductResultsPage] Error saving to approved_products table:', approvedError);
-          // Continue even if this fails, as we've already updated the main table
-          toast.error(`Product was approved but not added to admin dashboard: ${approvedError.message}. Please try again.`);
+        // Only use the existing ID if available, never create a new history entry
+        if (!existingId) {
+          console.error('[ProductResultsPage] Cannot approve product without existing ID');
+          throw new Error('Cannot approve this product. Please save it first.');
         }
         
-        // Show more specific success message 
-        const isReapproval = productToApprove.isApproved === true || !!productToApprove.approvedBy;
-        toast.success(
-          isReapproval 
-            ? `Product "${productToApprove.productDetails?.name}" has been re-approved with changes` 
-            : `Product "${productToApprove.productDetails?.name}" has been approved and will appear in the admin dashboard`
+        resultId = existingId;
+        
+        // Update the product in the existing array
+        const updatedProducts = [...editedProducts];
+        updatedProducts[index] = approvedProduct;
+        
+        // Update the existing entry in research_results
+        await updateResearchResults(
+          resultId, 
+          updatedProducts,
+          `${approvedProduct.companyName || 'Unknown'} - ${approvedProduct.productDetails?.name || 'Product'}`, 
+          false
         );
+        
+        // Add to the approved_products table
+        await saveApprovedProduct(
+          resultId, 
+          approvedProduct, 
+          index, // Keep the original index
+          user.id
+        );
+        
+        console.log(`[ProductResultsPage] Successfully added product to approved_products table without creating new history entry`);
+        
+        // Show success message
+        toast.success(`Product "${productToApprove.productDetails?.name}" has been approved and sent to admin dashboard`);
+        
+        // Update UI state to reflect approval (only for this product)
+        setEditedProducts(updatedProducts);
+        
+        // Refresh history list in the background
+        if (onHistorySave) {
+          console.log(`[ProductResultsPage] Refreshing history after approval`);
+          await onHistorySave();
+        }
+      } catch (error: any) {
+        console.error('[ProductResultsPage] Error during approval save:', error);
+        toast.error(`Failed to approve product: ${error.message}`);
       }
-      
     } catch (error: any) {
       console.error('[ProductResultsPage] Error during approval preparation:', error);
       toast.error(`Failed to approve product: ${error.message}`);
-      setActionLoadingIndex(null); // Ensure loading state is reset on error
+    } finally {
+      setActionLoadingIndex(null);
     }
-    // Loading state reset is handled in performSaveOrUpdate's finally block
   };
 
   // --- Update Section Handler --- 

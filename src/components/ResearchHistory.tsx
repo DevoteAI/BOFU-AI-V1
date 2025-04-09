@@ -77,7 +77,64 @@ export function ResearchHistory({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12">
+      {/* Search and filter bar */}
+      {results.length > 0 && !isLoading && (
+        <motion.div 
+          className="mb-8 bg-secondary-900/80 backdrop-blur-sm rounded-xl border-2 border-primary-500/20 shadow-glow p-4"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by company or product name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-secondary-800 border border-primary-500/30 text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-400">Sort:</span>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                className="flex items-center gap-1 px-3 py-1.5 bg-secondary-800 border border-primary-500/30 text-gray-300 rounded-lg hover:bg-secondary-700 transition-colors"
+              >
+                {sortOrder === 'desc' ? (
+                  <>
+                    <SortDesc className="w-4 h-4" /> Newest
+                  </>
+                ) : (
+                  <>
+                    <SortAsc className="w-4 h-4" /> Oldest
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Results count indicator */}
+      {results.length > 0 && !isLoading && (
+        <motion.div
+          className="mb-4 flex items-center gap-2 text-sm text-gray-400"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="w-2 h-2 rounded-full bg-primary-500"></div>
+          <span>
+            {sortedResults.length === results.length 
+              ? `Showing all ${results.length} saved research ${results.length === 1 ? 'item' : 'items'}`
+              : `Showing ${sortedResults.length} of ${results.length} research items`}
+          </span>
+        </motion.div>
+      )}
+
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <motion.div
@@ -115,12 +172,12 @@ export function ResearchHistory({
         </div>
       ) : (
         <motion.div
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 space-y-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {results.map((result, index) => (
+          {sortedResults.map((result, index) => (
             <motion.div
               key={result.id}
               className="group relative bg-secondary-900 border-2 border-primary-500/20 rounded-xl p-4 shadow-glow hover:shadow-glow-strong 
@@ -132,6 +189,12 @@ export function ResearchHistory({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
+              {/* Show badge for multiple products */}
+              {result.data.length > 1 && (
+                <div className="absolute -top-2 -right-2 bg-primary-500 text-secondary-900 text-xs font-bold px-2 py-1 rounded-lg">
+                  {result.data.length} Products
+                </div>
+              )}
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-medium text-primary-400">
@@ -140,6 +203,13 @@ export function ResearchHistory({
                   <p className="mt-1 text-sm text-gray-400">
                     {result.data[0]?.productDetails?.name || 'Unknown Product'}
                   </p>
+                  {/* Show type indicator - single vs collection */}
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${result.data.length === 1 ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+                    <span className="text-xs text-gray-400">
+                      {result.data.length === 1 ? 'Single Product' : 'Product Collection'}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={(e) => {
