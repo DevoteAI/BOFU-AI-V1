@@ -7,14 +7,14 @@ import { CompetitorAnalysis } from './CompetitorAnalysis';
 import { ProductDescription } from './ProductDescription';
 import { TargetPersona } from './TargetPersona';
 import { Capabilities } from './Capabilities';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, CheckSquare } from 'lucide-react';
 
 interface ProductCardProps {
   product: ProductAnalysis;
   index: number;
-  isSaving: boolean;
-  savingProductIndex: number | null;
+  isActionLoading: boolean;
   onSave: (product: ProductAnalysis, index: number) => Promise<void>;
+  onApprove: (product: ProductAnalysis, index: number) => Promise<void>;
   onUpdateSection: (productIndex: number, section: keyof ProductAnalysis, value: any) => void;
   updateProduct: (product: ProductAnalysis) => void;
   isMultipleProducts: boolean;
@@ -23,14 +23,44 @@ interface ProductCardProps {
 function ProductCard({
   product,
   index,
-  isSaving,
-  savingProductIndex,
+  isActionLoading,
   onSave,
+  onApprove,
   onUpdateSection,
   updateProduct,
   isMultipleProducts
 }: ProductCardProps) {
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+  const [originalApprovedProduct, setOriginalApprovedProduct] = React.useState<ProductAnalysis | null>(null);
+  
+  // Track the original approved state
+  React.useEffect(() => {
+    // If product becomes approved, save the original state
+    if ((product.isApproved === true || !!product.approvedBy) && !originalApprovedProduct) {
+      console.log('[ProductCard] Saving original approved product state:', product.productDetails?.name);
+      setOriginalApprovedProduct(JSON.parse(JSON.stringify(product)));
+    }
+    
+    // If product was previously approved, check for changes
+    if (originalApprovedProduct) {
+      const currentProductStr = JSON.stringify(product);
+      const originalProductStr = JSON.stringify(originalApprovedProduct);
+      
+      // If content changed (excluding approval metadata), mark as having unsaved changes
+      const hasChanged = currentProductStr !== originalProductStr;
+      setHasUnsavedChanges(hasChanged);
+      
+      console.log(`[ProductCard] Product ${product.productDetails?.name} changes detected:`, 
+        hasChanged ? 'Product has been modified since approval' : 'No changes since approval');
+    }
+  }, [product, originalApprovedProduct]);
+
+  // Reset original state if explicitly requested
+  const resetOriginalState = () => {
+    setOriginalApprovedProduct(null);
+    setHasUnsavedChanges(false);
+  };
   
   // Each section is collapsed by default
   React.useEffect(() => {
@@ -78,8 +108,18 @@ function ProductCard({
     return newObj;
   };
 
-  // Check if this specific product is being saved
-  const isThisProductSaving = isSaving && savingProductIndex === index;
+  // Custom approve handler that handles re-approvals
+  const handleApprove = async () => {
+    // Reset the original state to mark this as a fresh approval
+    resetOriginalState();
+    
+    // Call the parent's onApprove
+    await onApprove(product, index);
+  };
+
+  // Use the single loading prop for button states
+  const isThisProductSaving = isActionLoading;
+  const isThisProductApproving = isActionLoading;
 
   return (
     <motion.article
@@ -212,20 +252,53 @@ function ProductCard({
           }}
         />
 
-        {/* Save Button */}
-        <div className="flex justify-end mt-6">
+        {/* Buttons Section */}
+        <div className="flex justify-end items-center gap-4 mt-6">
+          {/* Approve Button */}
           <motion.button
-            onClick={() => onSave(product, index)}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-secondary-900 font-medium rounded-lg hover:bg-primary-400 transition-all
-              shadow-glow hover:shadow-glow-strong disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            onClick={handleApprove}
+            disabled={isActionLoading || (product.isApproved === true && !hasUnsavedChanges)}
+            className={`flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-500 transition-all
+              shadow-glow hover:shadow-glow-strong disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed disabled:opacity-70 ${(product.isApproved === true && !hasUnsavedChanges) ? 'bg-green-700 cursor-not-allowed' : ''}`}
+            whileHover={{ scale: (isActionLoading || (product.isApproved === true && !hasUnsavedChanges)) ? 1 : 1.02 }}
+            whileTap={{ scale: (isActionLoading || (product.isApproved === true && !hasUnsavedChanges)) ? 1 : 0.98 }}
           >
-            {isThisProductSaving ? (
+            {isActionLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                Processing...
+              </>
+            ) : product.isApproved === true && hasUnsavedChanges ? (
+              <>
+                <CheckSquare className="w-4 h-4" />
+                Re-approve Changes
+              </>
+            ) : (product.isApproved === true || !!product.approvedBy) ? (
+              <>
+                <CheckSquare className="w-4 h-4" />
+                Approved
+              </>
+            ) : (
+              <>
+                <CheckSquare className="w-4 h-4" />
+                Approve
+              </>
+            )}
+          </motion.button>
+
+          {/* Save Button */}
+          <motion.button
+            onClick={() => onSave(product, index)}
+            disabled={isActionLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-secondary-900 font-medium rounded-lg hover:bg-primary-400 transition-all
+              shadow-glow hover:shadow-glow-strong disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
+            whileHover={{ scale: isActionLoading ? 1 : 1.02 }}
+            whileTap={{ scale: isActionLoading ? 1 : 0.98 }}
+          >
+            {isActionLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
               </>
             ) : (
               <>

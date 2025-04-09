@@ -32,6 +32,8 @@ export function UserMenu({ user }: UserMenuProps) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success('Signed out successfully');
+      // Force a page refresh to ensure clean state and proper redirection
+      window.location.href = '/';
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to sign out');
     }

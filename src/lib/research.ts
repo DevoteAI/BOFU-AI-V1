@@ -52,6 +52,90 @@ export async function updateResearchResults(id: string, results: ProductAnalysis
   }
 }
 
+// Add a function to save an approved product to the approved_products table
+export async function saveApprovedProduct(
+  researchResultId: string,
+  product: ProductAnalysis,
+  productIndex: number,
+  approvedBy: string
+): Promise<string> {
+  try {
+    console.log('[research] Saving product to approved_products:', { 
+      researchResultId, 
+      productName: product.productDetails?.name,
+      approvedBy
+    });
+
+    // Insert the approved product into the approved_products table
+    const { data, error } = await supabase
+      .from('approved_products')
+      .insert({
+        research_result_id: researchResultId,
+        product_index: productIndex,
+        product_name: product.productDetails?.name || 'Unnamed Product',
+        product_description: product.productDetails?.description || '',
+        company_name: product.companyName || '',
+        approved_by: approvedBy,
+        product_data: product,
+        reviewed_status: 'pending'
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('[research] Error saving approved product:', error);
+      throw error;
+    }
+    
+    console.log('[research] Successfully saved to approved_products with id:', data.id);
+    return data.id;
+  } catch (error) {
+    console.error('[research] Error saving approved product:', error);
+    throw error;
+  }
+}
+
+// Function to get all approved products for the admin dashboard
+export async function getApprovedProducts(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('approved_products')
+      .select('*')
+      .order('approved_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('[research] Error fetching approved products:', error);
+    throw error;
+  }
+}
+
+// Function to update an approved product's review status
+export async function updateApprovedProductStatus(
+  id: string,
+  status: 'pending' | 'reviewed' | 'rejected',
+  reviewerId: string,
+  comments?: string
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('approved_products')
+      .update({
+        reviewed_status: status,
+        reviewer_id: reviewerId,
+        reviewer_comments: comments || null,
+        reviewed_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('[research] Error updating approved product status:', error);
+    throw error;
+  }
+}
+
 export async function getResearchResults(): Promise<ResearchResult[]> {
   try {
     const { data, error } = await supabase

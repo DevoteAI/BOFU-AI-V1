@@ -1,0 +1,54 @@
+# BOFU AI Project Intelligence
+
+## Project Structure
+- React with TypeScript as the main framework
+- Vite for building and development
+- Supabase for authentication and database
+- Tailwind CSS for styling
+- Framer Motion for animations
+
+## Critical Implementation Paths
+- Authentication flow is central to the application
+- Research submission follows a multi-step process
+- Admin approval workflow is a key business logic component
+- Document processing and analysis is a core feature
+
+## Code Patterns
+- Use React hooks for state management
+- Follow component-based architecture
+- Handle authentication state through Supabase
+- Use TypeScript interfaces for data models
+- Implement conditional rendering based on user role
+
+## Naming Conventions
+- Component files use PascalCase
+- Utility functions use camelCase
+- Types/interfaces use PascalCase
+- Constants use UPPER_SNAKE_CASE
+- Files generally follow their export name
+
+## File Organization
+- Components in src/components/
+- Pages/views derived from App.tsx conditionals
+- Utilities in src/utils/
+- Types in src/types/
+- Supabase integration in src/lib/
+
+## Environment Setup
+- Requires .env file with Supabase credentials
+- Development server runs on port 5173
+- Database schema requires specific tables in Supabase
+
+## User Preferences
+- Preserve existing UI/UX patterns
+- Maintain clear separation between admin and regular user flows
+- Focus on performance optimizations
+- Prioritize error handling improvements
+
+## Development Guidelines
+- Test all changes across regular and admin user roles
+- Ensure document processing works with various file types
+- Maintain responsive design across device sizes
+- Follow existing component patterns for UI consistency
+- Keep console logging for debugging purposes
+- Maintain clear state management across complex workflows 

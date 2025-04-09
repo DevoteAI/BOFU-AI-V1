@@ -1,6 +1,7 @@
 import React, { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { supabase } from '../../lib/supabase';
+import { signIn, isUserAdmin } from '../../lib/auth';
 import toast from 'react-hot-toast';
 
 interface AdminAuthModalProps {
@@ -21,57 +22,25 @@ export function AdminAuthModal({ isOpen, onClose, onAdminAuthenticated }: AdminA
     setIsLoading(true);
 
     try {
-      // Check if credentials match the admin credentials
-      if (formData.email === 'lashay@bofu.ai' && formData.password === 'ProTECTEDStrATEgists!!!1') {
-        // Sign in with Supabase
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (error) {
-          // If the user doesn't exist, create an account (only for the admin)
-          if (error.message.includes('Invalid login credentials')) {
-            const { error: signUpError } = await supabase.auth.signUp({
-              email: formData.email,
-              password: formData.password,
-              options: {
-                data: { 
-                  role: 'admin',
-                  is_admin: true
-                }
-              }
-            });
-
-            if (signUpError) {
-              throw signUpError;
-            }
-
-            toast.success('Admin account created and signed in!');
-          } else {
-            throw error;
-          }
-        }
-
-        // Add admin role to user metadata (if not already present)
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { 
-            role: 'admin',
-            is_admin: true
-          }
-        });
-
-        if (updateError) {
-          console.error('Error updating admin role:', updateError);
-        }
-
-        // Success - redirect to admin dashboard
+      // First, try to sign in with the provided credentials
+      await signIn(formData.email, formData.password);
+      
+      // Check if the user is an admin
+      const adminStatus = await isUserAdmin();
+      
+      if (adminStatus) {
+        // User is an admin, authenticate them
         toast.success('Admin authenticated!');
-        onAdminAuthenticated();
+        // First close the modal, then call onAdminAuthenticated callback
         onClose();
+        // Small timeout to ensure modal is fully closed before changing views
+        setTimeout(() => {
+          onAdminAuthenticated();
+        }, 100);
       } else {
-        // If credentials don't match, show error
-        toast.error('Invalid admin credentials');
+        // User is not an admin, sign them out and show error
+        await supabase.auth.signOut();
+        toast.error('This account does not have admin privileges');
       }
     } catch (error) {
       console.error('Admin auth error:', error);

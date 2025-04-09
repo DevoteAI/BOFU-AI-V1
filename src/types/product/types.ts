@@ -44,6 +44,8 @@ export interface ProductAnalysis {
     images?: string[];
   }>;
   competitors?: CompetitorsData;
+  isApproved?: boolean;
+  approvedBy?: string;
 }
 
 // Default product template
@@ -78,5 +80,7 @@ export const defaultProduct: ProductAnalysis = {
     direct_competitors: [],
     niche_competitors: [],
     broader_competitors: []
-  }
+  },
+  isApproved: false,
+  approvedBy: undefined
 };

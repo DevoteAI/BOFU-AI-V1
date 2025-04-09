@@ -1,6 +1,7 @@
 import React, { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { supabase } from '../../lib/supabase';
+import { registerUser, signIn } from '../../lib/auth';
 import toast from 'react-hot-toast';
 
 interface AuthModalProps {
@@ -29,168 +30,18 @@ export function AuthModal({ isOpen, onClose, onShowAdminLogin }: AuthModalProps)
 
     try {
       if (isSignUp) {
-        // Prepare user metadata with optional company name
-        const metadata: { company_name?: string } = {};
-        if (formData.companyName.trim()) {
-          metadata.company_name = formData.companyName.trim();
-        }
-        
-        // Try signup with retry logic
-        let error = null;
-        let retryCount = 0;
-        const maxRetries = 2;
-        
-        while (retryCount <= maxRetries) {
-          console.log('Attempting signup with metadata:', metadata);
-          
-          // Instead of regular signup, use admin API equivalent (signInWithPassword)
-          // This bypasses email verification requirements
-          const result = await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: formData.password
-          });
-          
-          if (result.error && result.error.message === 'Invalid login credentials') {
-            // User doesn't exist, create them
-            console.log('User does not exist yet, creating account');
-            const signUpResult = await supabase.auth.signUp({
-              email: formData.email,
-              password: formData.password,
-              options: {
-                emailRedirectTo: window.location.origin,
-                data: metadata
-              }
-            });
-            
-            error = signUpResult.error;
-            
-            if (!error) {
-              console.log('Signup successful, session:', signUpResult.data.session);
-              
-              // If we have successfully signed up but don't have a session (due to email verification),
-              // we'll use a passwordless magic link as a workaround
-              if (!signUpResult.data.session) {
-                console.log('No session after signup, sending magic link');
-                
-                const magicLinkResult = await supabase.auth.signInWithOtp({
-                  email: formData.email,
-                  options: {
-                    emailRedirectTo: window.location.origin
-                  }
-                });
-                
-                if (magicLinkResult.error) {
-                  console.error('Error sending magic link:', magicLinkResult.error);
-                  error = magicLinkResult.error;
-                } else {
-                  // Success - we'll show a different message to the user
-                  toast.success('Account created! Check your email for a login link.');
-                  onClose();
-                  return; // Exit early
-                }
-              }
-            }
-          } else if (result.error) {
-            // Some other error during sign in
-            error = result.error;
-          } else {
-            // User already exists and we successfully signed in
-            console.log('User already exists and signed in successfully');
-            
-            // If we have company name, update user metadata
-            if (metadata.company_name) {
-              try {
-                const { error: updateError } = await supabase.auth.updateUser({
-                  data: { company_name: metadata.company_name }
-                });
-                
-                if (updateError) {
-                  console.error('Error updating user metadata:', updateError);
-                } else {
-                  console.log('User metadata updated successfully');
-                }
-              } catch (updateError) {
-                console.error('Exception updating user metadata:', updateError);
-              }
-            }
-            
-            // We're done - user is logged in
-            toast.success('Signed in successfully!');
-            onClose();
-            return; // Exit early
-          }
-          
-          if (!error) {
-            break; // Success, exit the loop
-          } else {
-            console.error(`Attempt ${retryCount + 1} failed:`, error);
-            retryCount++;
-            
-            if (retryCount <= maxRetries) {
-              // Wait before retrying (exponential backoff)
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-            }
-          }
-        }
-        
-        if (error) {
-          console.error('Error after retries:', error);
-          throw error;
-        }
+        // Use our registerUser function for sign up
+        await registerUser(
+          formData.email,
+          formData.password,
+          formData.companyName.trim()
+        );
         
         toast.success('Account created successfully!');
         onClose();
       } else {
-        // Regular sign in flow
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        });
-        
-        if (error) {
-          console.error('Sign in error details:', error);
-          
-          // Check if the error is specifically about email verification
-          if (error.message === 'Email not confirmed') {
-            console.log('Email not confirmed, offering magic link alternative');
-            
-            // Show a special message with an option
-            toast.error('Your email is not verified. We can send you a magic link to sign in.');
-            
-            // Offer a magic link login option
-            const confirmSendLink = window.confirm(
-              'Your email is not verified. Would you like us to send you a magic link to sign in?'
-            );
-            
-            if (confirmSendLink) {
-              try {
-                const { error: otpError } = await supabase.auth.signInWithOtp({
-                  email: formData.email,
-                  options: {
-                    emailRedirectTo: window.location.origin
-                  }
-                });
-                
-                if (otpError) {
-                  console.error('Error sending magic link:', otpError);
-                  throw otpError;
-                }
-                
-                toast.success('Check your email for a login link!');
-                onClose();
-                return;
-              } catch (otpError) {
-                throw otpError;
-              }
-            } else {
-              // User declined magic link option
-              setIsLoading(false);
-              return; // Exit early without showing another error
-            }
-          }
-          
-          throw error;
-        }
+        // Use our signIn function for login
+        await signIn(formData.email, formData.password);
         
         toast.success('Signed in successfully!');
         onClose();

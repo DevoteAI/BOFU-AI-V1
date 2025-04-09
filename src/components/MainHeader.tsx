@@ -69,6 +69,15 @@ export function MainHeader({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       console.log("Signed out successfully");
+      // Force a page refresh for consistent behavior across the app
+      window.location.href = '/';
+      // Also call other necessary state updates
+      if (onShowAuthModal) {
+        onShowAuthModal();
+      }
+      if (setShowHistory) {
+        setShowHistory(false);
+      }
     } catch (error) {
       console.error("Error signing out:", error);
     }

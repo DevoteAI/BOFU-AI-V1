@@ -1,0 +1,506 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { ProductAnalysis } from '../../types/product/types';
+import { ResearchResult, getApprovedProducts, updateApprovedProductStatus } from '../../lib/research';
+import { User } from '@supabase/supabase-js';
+import { toast } from 'react-hot-toast';
+import { Eye, CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
+
+interface AdminDashboardProps {
+  onLogout: () => void;
+}
+
+// Interface for approved products
+interface ApprovedProduct {
+  id: string;
+  research_result_id: string;
+  product_index: number;
+  product_name: string;
+  product_description: string;
+  company_name: string;
+  approved_by: string;
+  approved_at: string;
+  reviewed_status: 'pending' | 'reviewed' | 'rejected';
+  reviewer_id: string | null;
+  reviewer_comments: string | null;
+  reviewed_at: string | null;
+  product_data: ProductAnalysis;
+  created_at: string;
+  updated_at: string;
+}
+
+// Simplified component - no complex grouping by approver
+export function AdminDashboard({ onLogout }: AdminDashboardProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingApproved, setIsLoadingApproved] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalResearches: 0,
+    totalApproved: 0,
+    pendingReview: 0,
+  });
+  const [approvedProducts, setApprovedProducts] = useState<ApprovedProduct[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ApprovedProduct | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  const refreshData = () => {
+    console.log('[AdminDashboard] Manually refreshing data...');
+    setRefreshCounter(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    // Fetch basic stats 
+    const fetchStats = async () => {
+      setIsLoading(true);
+      try {
+        const { count: userCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        const { count: researchCount } = await supabase
+          .from('research_results')
+          .select('*', { count: 'exact', head: true });
+          
+        const { count: approvedCount } = await supabase
+          .from('approved_products')
+          .select('*', { count: 'exact', head: true });
+          
+        const { count: pendingCount } = await supabase
+          .from('approved_products')
+          .select('*', { count: 'exact', head: true })
+          .eq('reviewed_status', 'pending');
+
+        setStats({
+          totalUsers: userCount || 0,
+          totalResearches: researchCount || 0,
+          totalApproved: approvedCount || 0,
+          pendingReview: pendingCount || 0,
+        });
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Fetch approved products from the dedicated table
+    const fetchApprovedProducts = async () => {
+      setIsLoadingApproved(true);
+      try {
+        console.log('[AdminDashboard] Fetching approved products...');
+        
+        // Use the dedicated function to get approved products
+        const approvedData = await getApprovedProducts();
+        
+        console.log(`[AdminDashboard] Fetched ${approvedData.length} approved products`);
+        
+        if (approvedData.length === 0) {
+          console.log('[AdminDashboard] No approved products found');
+          setApprovedProducts([]);
+          return;
+        }
+        
+        // Set the approved products directly
+        setApprovedProducts(approvedData);
+        
+      } catch (error) {
+        console.error('[AdminDashboard] Error fetching approved products:', error);
+        toast.error('Failed to load approved products');
+      } finally {
+        setIsLoadingApproved(false);
+      }
+    };
+
+    fetchStats();
+    fetchApprovedProducts();
+    
+    // Set up a refresh interval (every 30 seconds)
+    const refreshInterval = setInterval(() => {
+      console.log('[AdminDashboard] Auto-refreshing data...');
+      fetchApprovedProducts();
+    }, 30000);
+    
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [refreshCounter]); // Dependency on refreshCounter to allow manual refresh
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // Redirect to home page after logout
+    window.location.href = '/';
+    // Also call the onLogout prop to update parent component state
+    onLogout();
+  };
+
+  // Open the product detail modal
+  const handleViewDetails = (product: ApprovedProduct) => {
+    setSelectedProduct(product);
+    setIsDetailModalOpen(true);
+  };
+
+  // Close the detail modal
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedProduct(null);
+  };
+  
+  // Handle marking a product as reviewed
+  const handleMarkReviewed = async (productId: string) => {
+    setIsUpdatingStatus(productId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not logged in');
+      
+      await updateApprovedProductStatus(
+        productId,
+        'reviewed',
+        user.id,
+        'Approved by admin'
+      );
+      
+      toast.success('Product marked as reviewed');
+      
+      // Refresh the data
+      refreshData();
+      
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(`Failed to update status: ${error.message}`);
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+  
+  // Handle rejecting a product
+  const handleRejectProduct = async (productId: string) => {
+    setIsUpdatingStatus(productId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not logged in');
+      
+      await updateApprovedProductStatus(
+        productId,
+        'rejected',
+        user.id,
+        'Rejected by admin'
+      );
+      
+      toast.success('Product rejected');
+      
+      // Refresh the data
+      refreshData();
+      
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(`Failed to update status: ${error.message}`);
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-secondary-900 text-white p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-primary-400">Admin Dashboard</h1>
+          <div className="flex space-x-3">
+            <button
+              onClick={refreshData}
+              className="px-4 py-2 bg-primary-500/80 text-white rounded-md hover:bg-primary-400 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={16} className={isLoadingApproved ? "animate-spin" : ""} />
+              Refresh Data
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-secondary-800 text-primary-400 rounded-md hover:bg-secondary-700 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="animate-spin h-10 w-10 text-primary-400" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+              <h2 className="text-xl font-semibold text-primary-400 mb-4">User Statistics</h2>
+              <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
+              <p className="text-gray-400 mt-2">Total registered users</p>
+            </div>
+            
+            <div className="bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+              <h2 className="text-xl font-semibold text-primary-400 mb-4">Research Analytics</h2>
+              <div className="text-4xl font-bold text-white">{stats.totalResearches}</div>
+              <p className="text-gray-400 mt-2">Total research analyses</p>
+            </div>
+            
+            <div className="bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+              <h2 className="text-xl font-semibold text-primary-400 mb-4">Approved Products</h2>
+              <div className="text-4xl font-bold text-white">{stats.totalApproved}</div>
+              <p className="text-gray-400 mt-2">Total approved products</p>
+            </div>
+            
+            <div className="bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+              <h2 className="text-xl font-semibold text-primary-400 mb-4">Pending Review</h2>
+              <div className="text-4xl font-bold text-white">{stats.pendingReview}</div>
+              <p className="text-gray-400 mt-2">Products awaiting review</p>
+            </div>
+          </div>
+        )}
+
+        {/* Approved Products Section */}
+        <div className="mt-8 bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+          <h2 className="text-xl font-semibold text-primary-400 mb-4">Approved Products for Review</h2>
+          
+          {isLoadingApproved ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin h-8 w-8 text-primary-400" />
+            </div>
+          ) : approvedProducts.length === 0 ? (
+            <p className="text-gray-400">No products are currently awaiting review.</p>
+          ) : (
+            <div className="space-y-6">
+              {approvedProducts
+                .filter(product => product.reviewed_status === 'pending')
+                .map((product) => (
+                  <div 
+                    key={product.id}
+                    className="p-4 bg-secondary-800/70 rounded-md border border-secondary-700/50 shadow-md hover:border-primary-500/30 transition-colors duration-200"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <p className="font-semibold text-white text-lg mb-1">{product.product_name}</p>
+                        <p className="text-sm text-gray-400 mb-2">Company: {product.company_name || 'Unknown Company'}</p>
+                        <p className="text-sm text-gray-400 mb-2">Approved on: {new Date(product.approved_at).toLocaleString()}</p>
+                        <p className="text-sm text-gray-300 line-clamp-2 mb-3">
+                          {product.product_description || 'No description.'}
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleViewDetails(product)}
+                        className="p-1.5 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-colors"
+                        title="View Full Details"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="mt-3 pt-3 border-t border-secondary-700/50 flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => handleMarkReviewed(product.id)}
+                        disabled={isUpdatingStatus === product.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600/20 text-green-300 rounded-md hover:bg-green-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isUpdatingStatus === product.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <CheckCircle size={14} />
+                        )}
+                        Mark Reviewed
+                      </button>
+                      
+                      <button
+                        onClick={() => handleRejectProduct(product.id)}
+                        disabled={isUpdatingStatus === product.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-red-600/20 text-red-300 rounded-md hover:bg-red-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isUpdatingStatus === product.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <XCircle size={14} />
+                        )}
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reviewed Products Section */}
+        <div className="mt-8 bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+          <h2 className="text-xl font-semibold text-primary-400 mb-4">Reviewed Products</h2>
+          
+          {isLoadingApproved ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin h-8 w-8 text-primary-400" />
+            </div>
+          ) : approvedProducts.filter(p => p.reviewed_status === 'reviewed').length === 0 ? (
+            <p className="text-gray-400">No products have been reviewed yet.</p>
+          ) : (
+            <div className="space-y-6">
+              {approvedProducts
+                .filter(product => product.reviewed_status === 'reviewed')
+                .map((product) => (
+                  <div 
+                    key={product.id}
+                    className="p-4 bg-green-900/10 rounded-md border border-green-500/20 shadow-md hover:border-green-500/30 transition-colors duration-200"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <p className="font-semibold text-white text-lg mb-1">{product.product_name}</p>
+                        <p className="text-sm text-gray-400 mb-2">Company: {product.company_name || 'Unknown Company'}</p>
+                        <p className="text-sm text-gray-400 mb-2">Approved on: {new Date(product.approved_at).toLocaleString()}</p>
+                        <p className="text-sm text-green-300 mb-2">
+                          <CheckCircle size={14} className="inline mr-1" /> 
+                          Reviewed on: {product.reviewed_at ? new Date(product.reviewed_at).toLocaleString() : 'Unknown'}
+                        </p>
+                        <p className="text-sm text-gray-300 line-clamp-2 mb-3">
+                          {product.product_description || 'No description.'}
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleViewDetails(product)}
+                        className="p-1.5 text-primary-400 hover:bg-primary-500/20 rounded-lg transition-colors"
+                        title="View Full Details"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Admin Controls Placeholder */}
+        <div className="mt-8 bg-secondary-800 p-6 rounded-lg border-2 border-primary-500/20 shadow-glow">
+          <h2 className="text-xl font-semibold text-primary-400 mb-4">Admin Controls</h2>
+          <p className="text-gray-400">This section will contain additional admin controls and features.</p>
+        </div>
+      </div>
+      
+      {/* Product Details Modal */}
+      {isDetailModalOpen && selectedProduct && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-secondary-800 rounded-lg p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto border border-primary-500/20 shadow-glow">
+            <h2 className="text-xl font-bold text-primary-400 mb-4">
+              Product Details: {selectedProduct.product_name}
+            </h2>
+            
+            <div className="space-y-4 text-gray-300">
+              <div>
+                <h3 className="font-semibold text-primary-300">Company</h3>
+                <p className="mt-1">{selectedProduct.company_name || 'Unknown Company'}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-primary-300">Description</h3>
+                <p className="mt-1">{selectedProduct.product_description || 'No description available.'}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-primary-300">Status</h3>
+                <p className="mt-1 capitalize">
+                  {selectedProduct.reviewed_status === 'pending' && (
+                    <span className="text-yellow-400">Pending Review</span>
+                  )}
+                  {selectedProduct.reviewed_status === 'reviewed' && (
+                    <span className="text-green-400">Reviewed</span>
+                  )}
+                  {selectedProduct.reviewed_status === 'rejected' && (
+                    <span className="text-red-400">Rejected</span>
+                  )}
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-primary-300">Timestamps</h3>
+                <p className="mt-1">Approved: {new Date(selectedProduct.approved_at).toLocaleString()}</p>
+                {selectedProduct.reviewed_at && (
+                  <p className="mt-1">Reviewed: {new Date(selectedProduct.reviewed_at).toLocaleString()}</p>
+                )}
+              </div>
+              
+              {selectedProduct.product_data?.features && (
+                <div>
+                  <h3 className="font-semibold text-primary-300">Features</h3>
+                  <ul className="list-disc list-inside mt-1">
+                    {selectedProduct.product_data.features.map((feature, idx) => (
+                      <li key={idx}>{feature}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {selectedProduct.product_data?.usps && (
+                <div>
+                  <h3 className="font-semibold text-primary-300">Unique Selling Points</h3>
+                  <ul className="list-disc list-inside mt-1">
+                    {selectedProduct.product_data.usps.map((usp, idx) => (
+                      <li key={idx}>{usp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <div>
+                <h3 className="font-semibold text-primary-300">Full Data (Debug)</h3>
+                <pre className="bg-secondary-900 p-3 rounded text-xs overflow-x-auto mt-1">
+                  {JSON.stringify(selectedProduct.product_data, null, 2)}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-between">
+              {selectedProduct.reviewed_status === 'pending' && (
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => {
+                      handleMarkReviewed(selectedProduct.id);
+                      closeDetailModal();
+                    }}
+                    disabled={isUpdatingStatus === selectedProduct.id}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdatingStatus === selectedProduct.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <CheckCircle size={16} />
+                    )}
+                    Mark Reviewed
+                  </button>
+                  
+                  <button 
+                    onClick={() => {
+                      handleRejectProduct(selectedProduct.id);
+                      closeDetailModal();
+                    }}
+                    disabled={isUpdatingStatus === selectedProduct.id}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdatingStatus === selectedProduct.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <XCircle size={16} />
+                    )}
+                    Reject
+                  </button>
+                </div>
+              )}
+              
+              <button 
+                onClick={closeDetailModal}
+                className="px-4 py-2 bg-secondary-700 text-white rounded-md hover:bg-secondary-600 transition-colors ml-auto"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
